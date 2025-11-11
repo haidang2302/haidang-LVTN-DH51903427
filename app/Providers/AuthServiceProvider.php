@@ -4,6 +4,7 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,20 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
+        Gate::define('modules', function($user, $permisionName){
+            // Allow all access for development (remove this in production)
+            return true;
+            
+            // Original authorization logic (commented for now)
+            // if($user->publish == 0) return false;
+            // if(!$user->user_catalogues) return false;
+            // $permissions = $user->user_catalogues->permissions;
+            // if(!$permissions || $permissions->isEmpty()) return false;
+            // if($permissions->contains('canonical', $permisionName)){
+            //     return true;
+            // }
+            // return false;
+        });
     }
 }

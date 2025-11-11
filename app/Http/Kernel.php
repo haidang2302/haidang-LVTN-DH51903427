@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use PharIo\Manifest\License;
 
 class Kernel extends HttpKernel
 {
@@ -21,6 +22,8 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \Illuminate\Middleware\VendorRequest::class,
+        \Illuminate\Middleware\Lic::class,
     ];
 
     /**
@@ -39,7 +42,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
@@ -53,6 +56,13 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
+        'apply_language' => \App\Http\Middleware\ApplyLanguageMiddleware::class,
+        'login' => \App\Http\Middleware\LoginMiddleware::class,
+        'admin' => \App\Http\Middleware\AuthenticateMiddleware::class,
+        'customer' => \App\Http\Middleware\Customer::class,
+        'agency' => \App\Http\Middleware\Agency::class,
+        'locale' => \App\Http\Middleware\SetLocale::class,
+        'backend_default_locale' => \App\Http\Middleware\SetDefaultLocale::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
@@ -64,5 +74,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        
+        
     ];
 }

@@ -12,6 +12,12 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        // 'http://localhost:3000',
+        'ajax/cart/*',
+        'return/vnpay*',
+        'return/momo*',
+        'return/ipn*',
+        'paypal/success*',
+        'paypal/cancel*',
     ];
 }
