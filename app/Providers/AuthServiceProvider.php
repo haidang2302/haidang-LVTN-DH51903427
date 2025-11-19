@@ -24,18 +24,12 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
         Gate::define('modules', function($user, $permisionName){
-            // Allow all access for development (remove this in production)
-            return true;
-            
-            // Original authorization logic (commented for now)
-            // if($user->publish == 0) return false;
-            // if(!$user->user_catalogues) return false;
-            // $permissions = $user->user_catalogues->permissions;
-            // if(!$permissions || $permissions->isEmpty()) return false;
-            // if($permissions->contains('canonical', $permisionName)){
-            //     return true;
-            // }
-            // return false;
+            if($user->publish == 0) return false;
+            $permission = $user->user_catalogues->permissions;
+            if($permission->contains('canonical', $permisionName)){
+                return true;
+            }
+            return false;
         });
     }
 }

@@ -12,15 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'code')) {
-                $table->string('code')->default('0');
-            }
-            if (!Schema::hasColumn('products', 'made_in')) {
-                $table->string('made_in')->nullable();
-            }
-            if (!Schema::hasColumn('products', 'price')) {
-                $table->double('price', 8, 2)->default('0');
-            }
+            $table->string('code')->default(0);
+            $table->string('made_in')->nullable();
+            $table->float('price')->default(0);
         });
     }
 

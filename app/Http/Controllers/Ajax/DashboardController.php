@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Ajax;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Language;
 use Illuminate\Support\Str;
 
 class DashboardController extends Controller
@@ -15,7 +16,9 @@ class DashboardController extends Controller
        
     ){
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }

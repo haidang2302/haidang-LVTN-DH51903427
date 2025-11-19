@@ -9,27 +9,27 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\Customer\EditProfileRequest;
 use App\Http\Requests\Customer\RecoverCustomerPasswordRequest;
 use App\Services\Interfaces\CustomerServiceInterface  as CustomerService;
-// use App\Services\Interfaces\ConstructServiceInterface  as ConstructService;
-// ...existing use statements...
+use App\Services\Interfaces\ConstructServiceInterface  as ConstructService;
+use App\Repositories\Interfaces\ConstructRepositoryInterface  as ConstructRepository;
 
 class CustomerController extends FrontendController
 {
   
     protected $customerService;
-    // ...existing properties...
-    // protected $constructService;
+    protected $constructRepository;
+    protected $constructService;
     protected $customer;
 
     public function __construct(
         CustomerService $customerService,
-    // ...existing constructor params...
-    // ConstructService $constructService,
+        ConstructRepository $constructRepository,
+        ConstructService $constructService,
 
     ){
 
         $this->customerService = $customerService;
-    // $this->constructService = $constructService;
-    // ...existing constructor body...
+        $this->constructService = $constructService;
+        $this->constructRepository = $constructRepository;
 
         parent::__construct();
     
@@ -106,7 +106,7 @@ class CustomerController extends FrontendController
             'keyword' => $request->input('keyword'),
             'confirm' => $request->input('confirm')
         ];
-    $constructs = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $constructs = $this->constructRepository->findConstructByCustomer($customer->id, $condition);
         $system = $this->system;
         $seo = [
             'meta_title' => 'Trang quản lý danh sách công trình của '.$customer['name'],
@@ -128,7 +128,7 @@ class CustomerController extends FrontendController
     public function constructionProduct($id){
         $customer = Auth::guard('customer')->user();
 
-    $construction = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $construction = $this->constructRepository->findById($id, ['*'], ['products']);
 
         $system = $this->system;
         $seo = [
@@ -154,7 +154,7 @@ class CustomerController extends FrontendController
             'confirm' => $request->input('status')
         ];
 
-    $warranty = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $warranty = $this->constructRepository->warranty($customer->id, $condition);
 
 
         $system = $this->system;
@@ -175,9 +175,8 @@ class CustomerController extends FrontendController
 
     
     public function active(Request $request){
-    // $response = $this->constructService->activeWarranty($request, 'active');
-    // return response()->json($response); 
-    return response()->json(['error' => 'Chức năng đã bị xóa']);
+        $response = $this->constructService->activeWarranty($request, 'active');
+        return response()->json($response); 
 
     }
 

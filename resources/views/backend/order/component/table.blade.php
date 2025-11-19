@@ -39,7 +39,9 @@
                 <td class="text-right order-discount">
                     {{ convert_price($order->promotion['discount'], true) }}
                 </td>
-                
+                {{-- <td class="text-right order-shipping">
+                    {{ convert_price($order->shipping, true) }}
+                </td> --}}
                 <td class="text-right order-total">
                     {{ convert_price($order->cart['cartTotal'], true) }}
                 </td>

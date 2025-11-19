@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'user_catalogue_id')) {
-                $table->bigInteger('user_catalogue_id')->default(2);
-            }
+            $table->bigInteger('user_catalogue_id')->default(2);
         });
     }
 

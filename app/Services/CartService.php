@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\Interfaces\ProductServiceInterface as ProductService;
 use App\Repositories\Interfaces\ProductRepositoryInterface as ProductRepository;
-// ...existing use statements...
+use App\Repositories\Interfaces\PromotionRepositoryInterface as PromotionRepository;
 use App\Repositories\Interfaces\OrderRepositoryInterface as OrderRepository;
-
+use App\Repositories\Interfaces\ProductVariantRepositoryInterface  as ProductVariantRepository;
 use Cart;
 use App\Mail\OrderMail;
 
@@ -21,21 +21,21 @@ class CartService  implements CartServiceInterface
 {
 
     protected $productRepository;
-   
-    // ...existing properties...
+    protected $productVariantRepository;
+    protected $promotionRepository;
     protected $orderRepository;
     protected $productService;
 
     public function __construct(
         ProductRepository $productRepository,
-       
-    // ...existing constructor params...
+        ProductVariantRepository $productVariantRepository,
+        PromotionRepository $promotionRepository,
         OrderRepository $orderRepository,
         ProductService $productService,
     ){
         $this->productRepository = $productRepository;
-       
-    // ...existing constructor body...
+        $this->productVariantRepository = $productVariantRepository;
+        $this->promotionRepository = $promotionRepository;
         $this->orderRepository = $orderRepository;
         $this->productService = $productService;
     }
@@ -45,20 +45,24 @@ class CartService  implements CartServiceInterface
     public function create($request, $language = 1){
         try{
             $payload = $request->input();
-            $product = $this->productRepository->findById($payload['id']);
+            $product = $this->productRepository->findById($payload['id'], ['*'], [
+                'languages' => function($query) use ($language) {
+                    $query->where('language_id',  $language);
+                }
+            ]);
             $data = [
                 'id' => $product->id,
-                'name' => $product->name,
+                'name' => $product->languages->first()->pivot->name,
                 'qty' => $payload['quantity'],
             ];
             if(isset($payload['attribute_id']) && count($payload['attribute_id'])){
                 $attributeId = sortAttributeId($payload['attribute_id']);
                 $variant = $this->productVariantRepository->findVariant($attributeId, $product->id, $language);
-                $variantPromotion = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+                $variantPromotion = $this->promotionRepository->findPromotionByVariantUuid($variant->uuid);
                 $variantPrice = getVariantPrice($variant, $variantPromotion);
 
                 $data['id'] =  $product->id.'_'.$variant->uuid;
-                $data['name'] = $product->name.' '.$variant->languages()->first()->pivot->name;
+                $data['name'] = $product->languages->first()->pivot->name.' '.$variant->languages()->first()->pivot->name;
                 $data['price'] = ($variantPrice['priceSale'] > 0) ? $variantPrice['priceSale'] : $variantPrice['price'];
                 $data['options'] = [
                     'attribute' => $payload['attribute_id'],
@@ -294,7 +298,7 @@ class CartService  implements CartServiceInterface
     public function cartPromotion($cartTotal = 0){
         $maxDiscount = 0;
         $selectedPromotion = null;
-    $promotions = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $promotions = $this->promotionRepository->getPromotionByCartTotal();
         if(!is_null($promotions)){
             foreach($promotions as $promotion){
                 $discount = $promotion->discountInformation['info'];

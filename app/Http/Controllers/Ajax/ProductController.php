@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\Interfaces\ProductServiceInterface  as ProductService;
 use App\Repositories\Interfaces\ProductRepositoryInterface  as ProductRepository;
-
-
+use App\Repositories\Interfaces\ProductVariantRepositoryInterface  as ProductVariantRepository;
+use App\Repositories\Interfaces\PromotionRepositoryInterface  as PromotionRepository;
 use App\Repositories\Interfaces\AttributeRepositoryInterface  as AttributeRepository;
+use App\Models\Language;
 use Cart;
 
 
@@ -16,24 +17,27 @@ class ProductController extends Controller
 {
     protected $productService;
     protected $productRepository;
-    
-   
+    protected $productVariantRepository;
+    protected $promotionRepository;
     protected $attributeRepository;
-    
+    protected $language;
 
     public function __construct(
         ProductRepository $productRepository,
-        
+        ProductVariantRepository $productVariantRepository,
+        PromotionRepository $promotionRepository,
         AttributeRepository $attributeRepository,
         ProductService $productService,
     ){
         $this->productRepository = $productRepository;
-        // $this->productVariantRepository = $productVariantRepository;
-        // $this->promotionRepository = $promotionRepository;
+        $this->productVariantRepository = $productVariantRepository;
+        $this->promotionRepository = $promotionRepository;
         $this->attributeRepository = $attributeRepository;
         $this->productService = $productService;
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }
@@ -48,7 +52,7 @@ class ProductController extends Controller
                 ['tb2.language_id', '=', $this->language]
             ];
             if(isset($get['keyword']) && $get['keyword'] != ''){
-                // $keywordCondition = ['tb2.name','LIKE', '%'.$get['keyword'].'%'];
+                $keywordCondition = ['tb2.name','LIKE', '%'.$get['keyword'].'%'];
                 array_push($condition, $keywordCondition);
             }
             $objects = $loadClass->findProductForPromotion($condition);
@@ -62,7 +66,7 @@ class ProductController extends Controller
             $objects = $loadClass->pagination(
                 [
                     'product_catalogues.id', 
-                    // 'tb2.name', 
+                    'tb2.name', 
                 ], 
                 $conditionArray, 
                 20,

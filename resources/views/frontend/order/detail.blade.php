@@ -33,7 +33,7 @@
                                 @php
                                     $currentStatus = '';
                                     $statusClass = '';
-
+                                    
                                     if($order->delivery == 'delivered') {
                                         $currentStatus = 'Đã giao hàng';
                                         $statusClass = 'status-delivered';

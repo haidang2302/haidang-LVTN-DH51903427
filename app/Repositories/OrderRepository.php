@@ -22,27 +22,6 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $this->model = $model;
     }
 
-    public function findByCondition($condition = [], $flag = false, $relation = [], array $orderBy = ['id', 'desc'], array $param = [], array $withCount = []){
-        $query = $this->model->newQuery();
-        foreach($condition as $key => $val){
-            $query->where($val[0], $val[1], $val[2]);
-        }
-        if(!empty($relation)){
-            foreach($relation as $item){
-                $query->with($item);
-            }
-        }
-        if(!empty($orderBy)){
-            $query->orderBy($orderBy[0], $orderBy[1]);
-        }
-        if(!empty($withCount)){
-            foreach($withCount as $item){
-                $query->withCount($item);
-            }
-        }
-        return ($flag == false) ? $query->first() : $query->get();
-    }
-
     public function pagination(
         array $column = ['*'], 
         array $condition = [], 

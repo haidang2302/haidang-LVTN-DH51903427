@@ -81,7 +81,7 @@ return [
                 ],
             ]
         ],
-       /* [
+        /*[
             'title' => 'QL Nhóm Khách hàng',
             'icon' => 'fa fa-user',
             'name' => ['customer'],
@@ -197,7 +197,7 @@ return [
                 //     'title' => 'QL Module',
                 //     'route' => 'generate/index'
                 // ],
-                [
+                /*[
                     'title' => 'Cấu hình hệ thống',
                     'route' => 'system/index'
                 ],

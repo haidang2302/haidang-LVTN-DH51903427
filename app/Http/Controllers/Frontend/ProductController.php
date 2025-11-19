@@ -8,7 +8,7 @@ use App\Repositories\Interfaces\ProductCatalogueRepositoryInterface as ProductCa
 use App\Services\Interfaces\ProductCatalogueServiceInterface as ProductCatalogueService;
 use App\Services\Interfaces\ProductServiceInterface as ProductService;
 use App\Repositories\Interfaces\ProductRepositoryInterface as ProductRepository;
-use App\Repositories\Interfaces\ReviewRepositoryInterface as ReviewRepository;
+
 use App\Services\Interfaces\WidgetServiceInterface  as WidgetService;
 use App\Models\System;
 use Cart;
@@ -21,7 +21,6 @@ class ProductController extends FrontendController
     protected $productCatalogueService;
     protected $productService;
     protected $productRepository;
-    protected $reviewRepository;
     protected $widgetService;
 
     public function __construct(
@@ -29,14 +28,12 @@ class ProductController extends FrontendController
         ProductCatalogueService $productCatalogueService,
         ProductService $productService,
         ProductRepository $productRepository,
-        ReviewRepository $reviewRepository,
         WidgetService $widgetService,
     ){
         $this->productCatalogueRepository = $productCatalogueRepository;
         $this->productCatalogueService = $productCatalogueService;
         $this->productService = $productService;
         $this->productRepository = $productRepository;
-        $this->reviewRepository = $reviewRepository;
         $this->widgetService = $widgetService;
         parent::__construct(); 
     }
@@ -125,7 +122,6 @@ class ProductController extends FrontendController
             'js' => [
                 'frontend/core/library/cart.js',
                 'frontend/core/library/product.js',
-                'frontend/core/library/review.js'
             ],
             'css' => [
                 'frontend/core/css/product.css',

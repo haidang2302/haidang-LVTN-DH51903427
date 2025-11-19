@@ -30,8 +30,8 @@
         </div>
         <div class="uk-width-large-3-5">
             <div class="info">
-                <div class="brand">Quần Áo</div>
-                <div class="title"><a href="" title="">Áo sơ mi</a></div>
+                <div class="brand">Apple</div>
+                <div class="title"><a href="" title="">2022 Apple iMac with Retina 5K Display 8GB RAM, 256GB SSD</a></div>
                 <div class="rating">
                     <div class="uk-flex uk-flex-middle">
                         <div class="star">
@@ -46,8 +46,8 @@
                 </div>
                 <div class="price">
                     <div class="uk-flex uk-flex-bottom">
-                        <div class="price-sale">350.000đ</div>
-                        <div class="price-old">500.000đ</div>
+                        <div class="price-sale">9.000.000đ</div>
+                        <div class="price-old">10.900.000đ</div>
                     </div>
                 </div>
                 <div class="progress-bar">
@@ -59,7 +59,11 @@
                     </div>
                 </div>
                 <div class="description">
-                    <p>Áo sơ mi</p>
+                    <p>27-inch (diagonal) Retina 5K display</p>
+                    <p>3.1GHz 6-core 10th-generation Intel Core i5</p>
+                    <p>AMD Radeon Pro 5300 graphics</p>
+                    <p>AMD Radeon Pro 5300 graphics</p>
+                    <p>3.1GHz 6-core 10th-generation Intel Core i5</p>
                 </div>
             </div>
         </div>

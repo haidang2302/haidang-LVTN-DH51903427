@@ -24,18 +24,26 @@ class AttributeRepository extends BaseRepository implements AttributeRepositoryI
 
     public function getAttributeById(int $id = 0, $language_id = 0){
         return $this->model->select([
-                'attributes.*'
+                'attributes.id',
+                'attributes.attribute_catalogue_id',
+                'attributes.image',
+                'attributes.icon',
+                'attributes.album',
+                'attributes.publish',
+                'attributes.follow',
+                'tb2.name',
+                'tb2.description',
+                'tb2.content',
+                'tb2.meta_title',
+                'tb2.meta_keyword',
+                'tb2.meta_description',
+                'tb2.canonical',
             ]
         )
+        ->join('attribute_language as tb2', 'tb2.attribute_id', '=','attributes.id')
         ->with('attribute_catalogues')
+        ->where('tb2.language_id', '=', $language_id)
         ->find($id);
-    }
-
-    public function paginate($perPage = null){
-        return $this->model
-            ->whereNotNull('name')
-            ->orderBy('id', 'DESC')
-            ->paginate($perPage ?? 20);
     }
 
     public function searchAttributes(string $keyword = '', array $option = [], int $languageId){

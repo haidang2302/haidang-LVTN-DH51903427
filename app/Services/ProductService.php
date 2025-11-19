@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Services\BaseService;
 use App\Repositories\Interfaces\ProductRepositoryInterface as ProductRepository;
-
-
+use App\Repositories\Interfaces\RouterRepositoryInterface as RouterRepository;
+use App\Repositories\Interfaces\ProductVariantLanguageRepositoryInterface as ProductVariantLanguageRepository;
+use App\Repositories\Interfaces\ProductVariantAttributeRepositoryInterface as ProductVariantAttributeRepository;
+use App\Repositories\Interfaces\PromotionRepositoryInterface as PromotionRepository;
 use App\Repositories\Interfaces\AttributeCatalogueRepositoryInterface as AttributeCatalogueRepository;
 use App\Repositories\Interfaces\AttributeRepositoryInterface as AttributeRepository;
 use App\Services\Interfaces\ProductCatalogueServiceInterface as ProductCatalogueService;
@@ -28,29 +30,29 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class ProductService extends BaseService implements ProductServiceInterface
 {
     protected $productRepository;
-    // protected $routerRepository;
-    // protected $productVariantLanguageRepository;
-    // protected $productVariantAttributeRepository;
-    
+    protected $routerRepository;
+    protected $productVariantLanguageRepository;
+    protected $productVariantAttributeRepository;
+    protected $promotionRepository;
     protected $attributeCatalogueRepository;
     protected $attributeRepository;
     protected $productCatalogueService;
     
     public function __construct(
         ProductRepository $productRepository,
-        // RouterRepository $routerRepository,
-        // ProductVariantLanguageRepository $productVariantLanguageRepository,
-        // ProductVariantAttributeRepository $productVariantAttributeRepository,
-        // PromotionRepository $promotionRepository,
+        RouterRepository $routerRepository,
+        ProductVariantLanguageRepository $productVariantLanguageRepository,
+        ProductVariantAttributeRepository $productVariantAttributeRepository,
+        PromotionRepository $promotionRepository,
         AttributeCatalogueRepository $attributeCatalogueRepository,
         AttributeRepository $attributeRepository,
         ProductCatalogueService $productCatalogueService,
     ){
         $this->productRepository = $productRepository;
-        // $this->routerRepository = $routerRepository;
-        // $this->promotionRepository = $promotionRepository;
-        // $this->productVariantLanguageRepository = $productVariantLanguageRepository;
-        // $this->productVariantAttributeRepository = $productVariantAttributeRepository;
+        $this->routerRepository = $routerRepository;
+        $this->promotionRepository = $promotionRepository;
+        $this->productVariantLanguageRepository = $productVariantLanguageRepository;
+        $this->productVariantAttributeRepository = $productVariantAttributeRepository;
         $this->attributeCatalogueRepository = $attributeCatalogueRepository;
         $this->attributeRepository = $attributeRepository;
         $this->productCatalogueService = $productCatalogueService;
@@ -108,7 +110,7 @@ class ProductService extends BaseService implements ProductServiceInterface
 
         // dd($rawQuery);
         $joins = [
-            // ['product_language as tb2', 'tb2.product_id', '=', 'products.id'],
+            ['product_language as tb2', 'tb2.product_id', '=', 'products.id'],
             ['product_catalogue_product as tb3', 'products.id', '=', 'tb3.product_id'],
         ];
 
@@ -292,9 +294,9 @@ class ProductService extends BaseService implements ProductServiceInterface
         $payload['user_id'] = Auth::id();
         $payload['album'] = $this->formatAlbum($request);
         $payload['price'] = convert_price(($payload['price']) ?? 0);
-        $payload['attributeCatalogue'] = $this->formatJson($request->input('attributeCatalogue', []), 'attributeCatalogue');
+        $payload['attributeCatalogue'] = $this->formatJson($request, 'attributeCatalogue');
         $payload['attribute'] = $request->input('attribute');
-        $payload['variant'] = $this->formatJson($request->input('variant', []), 'variant');
+        $payload['variant'] = $this->formatJson($request, 'variant');
 
         $payload['qrcode'] = $this->qrCode($request);
 
@@ -316,7 +318,12 @@ class ProductService extends BaseService implements ProductServiceInterface
     }
 
    
-    
+    private function updateLanguageForProduct($product, $request, $languageId){
+        $payload = $request->only($this->payloadLanguage());
+        $payload = $this->formatLanguagePayload($payload, $product->id, $languageId);
+        $product->languages()->detach([$languageId, $product->id]);
+        return $this->productRepository->createPivot($product, $payload, 'languages');
+    }
 
     private function updateCatalogueForProduct($product, $request){
         $product->product_catalogues()->sync($this->catalogue($request));
@@ -345,12 +352,12 @@ class ProductService extends BaseService implements ProductServiceInterface
             'products.image',
             'products.order',
             'products.price',
-            // 'tb2.name', 
+            'tb2.name', 
             'tb2.canonical',
         ];
     }
 
-    public function payload(){
+    private function payload(){
         return [
             'follow',
             'publish',
@@ -369,8 +376,8 @@ class ProductService extends BaseService implements ProductServiceInterface
         ];
     }
 
-    public function payloadLanguage(){
-        return  [
+    private function payloadLanguage(){
+        return [
             'name',
             'description',
             'content',
@@ -632,17 +639,6 @@ class ProductService extends BaseService implements ProductServiceInterface
 
         }
         return $query;
-    }
-
-    // Override formatJson từ BaseService để xử lý array từ request
-    public function formatJson($data, $module){
-        // Nếu data là array đơn giản từ request, chỉ cần encode thành JSON
-        if(is_array($data)){
-            return json_encode($data);
-        }
-        
-        // Nếu là collection, sử dụng logic từ parent
-        return parent::formatJson($data, $module);
     }
 
     

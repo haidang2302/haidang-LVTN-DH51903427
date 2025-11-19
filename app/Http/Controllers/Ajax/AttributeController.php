@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ajax;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Repositories\Interfaces\AttributeRepositoryInterface  as AttributeRepository;
+use App\Models\Language;
 
 
 class AttributeController extends Controller
@@ -17,7 +18,9 @@ class AttributeController extends Controller
     ){
         $this->attributeRepository = $attributeRepository;
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }

@@ -6,10 +6,10 @@ use App\Http\Controllers\FrontendController;
 use Illuminate\Http\Request;
 use App\Services\CartService;
 use App\Repositories\Interfaces\ProvinceRepositoryInterface  as ProvinceRepository;
-// ...existing use statements...
- use App\Repositories\Interfaces\OrderRepositoryInterface  as OrderRepository;
+use App\Repositories\Interfaces\PromotionRepositoryInterface  as PromotionRepository;
+use App\Repositories\Interfaces\OrderRepositoryInterface  as OrderRepository;
 use App\Http\Requests\StoreCartRequest;
-use Gloudemans\Shoppingcart\Facades\Cart;
+use Cart;
 use App\Classes\Vnpay;
 use App\Classes\Momo;
 use App\Classes\Paypal;
@@ -19,7 +19,7 @@ class CartController extends FrontendController
 {
   
     protected $provinceRepository;
-    // ...existing properties...
+    protected $promotionRepository;
     protected $orderRepository;
     protected $cartService;
     protected $vnpay;
@@ -29,7 +29,7 @@ class CartController extends FrontendController
 
     public function __construct(
         ProvinceRepository $provinceRepository,
-    // ...existing constructor params...
+        PromotionRepository $promotionRepository,
         OrderRepository $orderRepository,
         CartService $cartService,
         Vnpay $vnpay,
@@ -39,7 +39,7 @@ class CartController extends FrontendController
     ){
         $this->middleware('auth:customer');
         $this->provinceRepository = $provinceRepository;
-    // ...existing constructor body...
+        $this->promotionRepository = $promotionRepository;
         $this->orderRepository = $orderRepository;
         $this->cartService = $cartService;
         $this->vnpay = $vnpay;
@@ -50,7 +50,6 @@ class CartController extends FrontendController
     }
 
     public function cart(){
-        $provinces = $this->provinceRepository->all();
         $carts = Cart::instance('shopping')->content();
         $carts = $this->cartService->remakeCart($carts);
         $cartCaculate = $this->cartService->reCaculateCart();
@@ -65,14 +64,13 @@ class CartController extends FrontendController
         ];
         $system = $this->system;
         $config = $this->config();
-        return view('frontend.cart.index', compact(
+        return view('frontend.cart.cart', compact(
             'config',
             'seo',
             'system',
             'carts',
             'cartPromotion',
             'cartCaculate',
-            'provinces',
         ));
     }
 
@@ -124,11 +122,7 @@ class CartController extends FrontendController
         $order = $this->orderRepository->findByCondition([
             ['code', '=', $code],
         ], false, ['products']);
-        // Nếu đơn hàng đang ở trạng thái 'pending', chuyển sang 'confirm'
-       // if ($order && $order->confirm == 'pending') {
-         //   $order->confirm = 'confirm';
-        //    $order->save();
-       // }
+        
         $seo = [
             'meta_title' => 'Thanh toán đơn hàng thành công',
             'meta_keyword' => '',
@@ -152,40 +146,6 @@ class CartController extends FrontendController
         return $response;
     }
 
-    /**
-     * Tiếp tục thanh toán đơn hàng chờ xử lý
-     */
-   /* public function continueOrder($orderCode)
-    {
-        $customer = auth()->guard('customer')->user();
-        if (!$customer) {
-            return redirect()->route('fe.auth.login')->with('error', 'Vui lòng đăng nhập để tiếp tục thanh toán');
-        }
-        $order = $this->orderRepository->findByCondition([
-            ['code', '=', $orderCode],
-            ['customer_id', '=', $customer->id],
-            ['confirm', '=', 'pending'],
-        ], false, ['products']);
-        if (!$order) {
-            return redirect()->route('my-order.index')->with('error', 'Không tìm thấy đơn hàng hoặc đơn hàng không ở trạng thái chờ xử lý');
-        }
-        // Xóa giỏ hàng hiện tại
-        Cart::instance('shopping')->destroy();
-        // Nạp lại sản phẩm từ đơn hàng vào giỏ hàng
-        foreach ($order->products as $product) {
-            $options = $product->pivot->option ? json_decode($product->pivot->option, true) : [];
-            Cart::instance('shopping')->add([
-                'id' => $product->pivot->product_id . ($product->pivot->uuid ? '_' . $product->pivot->uuid : ''),
-                'name' => $product->pivot->name,
-                'qty' => $product->pivot->qty,
-                'price' => $product->pivot->price,
-                'weight' => 0,
-                'options' => $options,
-            ]);
-        }
-        // Chuyển hướng về trang checkout
-        return redirect()->route('cart.checkout');
-    }*/
     
     private function config(){
         return [

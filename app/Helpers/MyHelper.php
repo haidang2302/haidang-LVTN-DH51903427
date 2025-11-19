@@ -147,9 +147,10 @@ if(!function_exists('getVariantPrice')){
 if(!function_exists('getReview')){
     function getReview($product = ''){
 
-        $totalReviews = $product->reviews()->count();
-        $totalRate = number_format($product->reviews()->avg('score'), 1);
-        $starPercent = ($totalReviews == 0) ? '0' : $totalRate/5*100;
+        
+        $totalReviews = 0;
+        $totalRate = 0;
+        $starPercent = 0;
     
 
         return [
@@ -381,11 +382,12 @@ if(!function_exists('buildMenu')){
 
 if(!function_exists('loadClass')){
     function loadClass(string $model = '', $folder = 'Repositories', $interface = 'Repository'){
-        $serviceInterfaceNamespace = '\App\\'.$folder.'\\' . ucfirst($model) . $interface;
-        if (class_exists($serviceInterfaceNamespace)) {
-            $serviceInstance = app($serviceInterfaceNamespace);
-        }
-        return $serviceInstance;
+            $serviceInterfaceNamespace = '\App\\'.$folder.'\\' . ucfirst($model) . $interface;
+            $serviceInstance = null;
+            if (class_exists($serviceInterfaceNamespace)) {
+                $serviceInstance = app($serviceInterfaceNamespace);
+            }
+            return $serviceInstance;
     }
 }
 

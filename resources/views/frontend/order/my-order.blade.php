@@ -38,7 +38,7 @@
                                                         $statusText = 'Đã hủy';
                                                         $statusClass = 'status-cancelled';
                                                         break;
-                                                    default:   
+                                                    default:
                                                         $statusText = 'Chờ xử lý';
                                                         $statusClass = 'status-pending';
                                                 }
@@ -108,6 +108,8 @@
                                     <i class="fa fa-shopping-cart fa-3x"></i>
                                 </div>
                                 <h3>Chưa có đơn hàng nào</h3>
+                                <p>Hãy tiếp tục mua sắm để tạo đơn hàng đầu tiên của bạn!</p>
+                                <a href="{{ route('home.index') }}" class="uk-button uk-button-primary">Tiếp tục mua sắm</a>
                             </div>
                         @endif
                     </div>

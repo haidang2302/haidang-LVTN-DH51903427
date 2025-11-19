@@ -99,7 +99,7 @@
 
 <script>
     var attributeCatalogue = @json($attributeCatalogue->map(function($item){
-        $name = $item->name ?? 'Unnamed';
+        $name = $item->attribute_catalogue_language->first()->name;
         return [
             'id' => $item->id,
             'name' => $name

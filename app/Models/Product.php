@@ -29,14 +29,7 @@ class Product extends Model
         'qrcode',
         'warranty',
         'check',
-        'quantity',
-        'name',
-        'canonical',
-        'description',
-        'content',
-        'meta_title',
-        'meta_keyword',
-        'meta_description',
+        'quantity'
     ];
 
     protected $casts = [
@@ -45,7 +38,19 @@ class Product extends Model
 
     protected $table = 'products';
 
-    
+    public function languages(){
+        return $this->belongsToMany(Language::class, 'product_language' , 'product_id', 'language_id')
+        ->withPivot(
+            'name',
+            'canonical',
+            'meta_title',
+            'meta_keyword',
+            'meta_description',
+            'description',
+            'content',
+            'url',
+        )->withTimestamps();
+    }
     public function product_catalogues(){
         return $this->belongsToMany(ProductCatalogue::class, 'product_catalogue_product' , 'product_id', 'product_catalogue_id');
     }
@@ -75,10 +80,7 @@ class Product extends Model
         );
     }
 
-    public function reviews(){
-        return $this->morphMany(Review::class, 'reviewable');
-    }
-
+    
     public function constructions(){
         return $this->belongsToMany(Construction::class, 'construction_product' , 'construction_id', 'product_id')->withPivot(
             'construction_id',

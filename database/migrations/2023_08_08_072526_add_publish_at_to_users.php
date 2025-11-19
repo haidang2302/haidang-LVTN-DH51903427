@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'publish')) {
-                $table->tinyInteger('publish')->default(0);
-            }
+            $table->tinyInteger('publish')->default(0);
         });
     }
 

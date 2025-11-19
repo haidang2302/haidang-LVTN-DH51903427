@@ -57,7 +57,6 @@
     </div>
 </div>
 @endsection
-<script src="/js/location.js"></script>
 <script>
     var province_id = '{{ (isset($order->province_id)) ? $order->province_id : old('province_id') }}'
     var district_id = '{{ (isset($order->district_id)) ? $order->district_id : old('district_id') }}'

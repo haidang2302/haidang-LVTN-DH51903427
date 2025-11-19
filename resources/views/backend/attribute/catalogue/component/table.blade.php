@@ -9,21 +9,12 @@
             <input type="checkbox" value="" id="checkAll" class="input-checkbox">
         </th>
         <th>{{ __('messages.tableName') }}</th>
-        
+        @include('backend.dashboard.component.languageTh')
         <th class="text-center" style="width:100px;">{{ __('messages.tableStatus') }} </th>
         <th class="text-center" style="width:100px;">{{ __('messages.tableAction') }} </th>
     </tr>
     </thead>
     <tbody>
-        {{-- DEBUG --}}
-        @php
-            echo "<!-- attributeCatalogues isset: " . (isset($attributeCatalogues) ? 'YES' : 'NO') . " -->";
-            echo "<!-- attributeCatalogues is_object: " . (is_object($attributeCatalogues) ? 'YES' : 'NO') . " -->";
-            if(isset($attributeCatalogues)) {
-                echo "<!-- attributeCatalogues count: " . $attributeCatalogues->count() . " -->";
-            }
-        @endphp
-        
         @if(isset($attributeCatalogues) && is_object($attributeCatalogues))
             @foreach($attributeCatalogues as $attributeCatalogue)
             <tr >
@@ -34,7 +25,7 @@
                 <td>
                     {{ str_repeat('|----', (($attributeCatalogue->level > 0)?($attributeCatalogue->level - 1):0)).$attributeCatalogue->name }}
                 </td>
-                {{-- @include('backend.dashboard.component.languageTd', ['model' => $attributeCatalogue, 'modeling' => 'AttributeCatalogue']) --}}
+                @include('backend.dashboard.component.languageTd', ['model' => $attributeCatalogue, 'modeling' => 'AttributeCatalogue'])
                 <td class="text-center js-switch-{{ $attributeCatalogue->id }}"> 
                     <input type="checkbox" value="{{ $attributeCatalogue->publish }}" class="js-switch status " data-field="publish" data-model="{{ $config['model'] }}" {{ ($attributeCatalogue->publish == 2) ? 'checked' : '' }} data-modelId="{{ $attributeCatalogue->id }}" />
                 </td>

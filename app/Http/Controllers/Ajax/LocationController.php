@@ -26,12 +26,11 @@ class LocationController extends Controller
 
         $html = '';
         if($get['target'] == 'districts'){
-            $districts = $this->districtRepository->findDistrictByProvinceId($get['data']['location_id']);
-            $html = $this->renderHtml($districts);
+            $province = $this->provinceRepository->findById($get['data']['location_id'], ['code','name'], ['districts']);
+            $html = $this->renderHtml($province->districts);
         }else if($get['target'] == 'wards'){
-            $district = \App\Models\District::with('wards')->where('code', $get['data']['location_id'])->first();
-            $wards = $district ? $district->wards : [];
-            $html = $this->renderHtml($wards, '[Chọn Phường/Xã]');
+            $district = $this->districtRepository->findById($get['data']['location_id'], ['code','name'], ['wards']);
+            $html = $this->renderHtml($district->wards, '[Chọn Phường/Xã]');
         }
         $response = [
             'html' => $html

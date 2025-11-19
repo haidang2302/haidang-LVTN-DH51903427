@@ -12,6 +12,7 @@ use App\Http\Requests\Product\UpdateProductCatalogueRequest;
 use App\Http\Requests\Product\DeleteProductCatalogueRequest;
 use App\Classes\Nestedsetbie;
 use Auth;
+use App\Models\Language;
 use Illuminate\Support\Facades\App;
 class ProductCatalogueController extends Controller
 {
@@ -19,30 +20,36 @@ class ProductCatalogueController extends Controller
     protected $productCatalogueService;
     protected $productCatalogueRepository;
     protected $nestedset;
-    
+    protected $language;
 
     public function __construct(
         ProductCatalogueService $productCatalogueService,
         ProductCatalogueRepository $productCatalogueRepository
     ){
-        
+        $this->middleware(function($request, $next){
+            $locale = app()->getLocale();
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
+            $this->initialize();
+            return $next($request);
+        });
 
 
         $this->productCatalogueService = $productCatalogueService;
         $this->productCatalogueRepository = $productCatalogueRepository;
     }
 
-    // private function initialize(){
-    //     $this->nestedset = new Nestedsetbie([
-    //         'table' => 'product_catalogues',
-    //         'foreignkey' => 'product_catalogue_id',
-    //         'language_id' =>  $this->language,
-    //     ]);
-    // } 
+    private function initialize(){
+        $this->nestedset = new Nestedsetbie([
+            'table' => 'product_catalogues',
+            'foreignkey' => 'product_catalogue_id',
+            'language_id' =>  $this->language,
+        ]);
+    } 
  
     public function index(Request $request){
         $this->authorize('modules', 'product.catalogue.index');
-        $productCatalogues = $this->productCatalogueService->paginate($request, null);
+        $productCatalogues = $this->productCatalogueService->paginate($request, $this->language);
         $config = [
             'js' => [
                 'backend/js/plugins/switchery/switchery.js',
@@ -68,12 +75,7 @@ class ProductCatalogueController extends Controller
         $config = $this->configData();
         $config['seo'] = __('messages.productCatalogue');
         $config['method'] = 'create';
-        $nestedset = new Nestedsetbie([
-            'table' => 'product_catalogues',
-            'foreignkey' => 'product_catalogue_id',
-            'language_id' => null,
-        ]);
-        $dropdown = $nestedset->Dropdown();
+        $dropdown  = $this->nestedset->Dropdown();
         $template = 'backend.product.catalogue.store';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -83,7 +85,7 @@ class ProductCatalogueController extends Controller
     }
 
     public function store(StoreProductCatalogueRequest $request){
-        if($this->productCatalogueService->create($request, null)){
+        if($this->productCatalogueService->create($request, $this->language)){
             return redirect()->route('product.catalogue.index')->with('success','Thêm mới bản ghi thành công');
         }
         return redirect()->route('product.catalogue.index')->with('error','Thêm mới bản ghi không thành công. Hãy thử lại');
@@ -91,17 +93,12 @@ class ProductCatalogueController extends Controller
 
     public function edit($id, Request $request){
         $this->authorize('modules', 'product.catalogue.update');
-        $productCatalogue = $this->productCatalogueRepository->getProductCatalogueById($id, null);
+        $productCatalogue = $this->productCatalogueRepository->getProductCatalogueById($id, $this->language);
         $queryUrl = $request->getQueryString();
         $config = $this->configData();
         $config['seo'] = __('messages.productCatalogue');
         $config['method'] = 'edit';
-        $nestedset = new Nestedsetbie([
-            'table' => 'product_catalogues',
-            'foreignkey' => 'product_catalogue_id',
-            'language_id' => null,
-        ]);
-        $dropdown = $nestedset->Dropdown();
+        $dropdown  = $this->nestedset->Dropdown();
         $template = 'backend.product.catalogue.store';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -113,9 +110,8 @@ class ProductCatalogueController extends Controller
     }
 
     public function update($id, UpdateProductCatalogueRequest $request){
-        \Log::info('Request All Data:', $request->all());
         $queryString = base64_decode($request->getQueryString());
-        if($this->productCatalogueService->update($id, $request, null)){
+        if($this->productCatalogueService->update($id, $request, $this->language)){
             return redirect()->route('product.catalogue.index', $queryString)->with('success','Cập nhật bản ghi thành công');
         }
         return redirect()->route('product.catalogue.index')->with('error','Cập nhật bản ghi không thành công. Hãy thử lại');
@@ -124,7 +120,7 @@ class ProductCatalogueController extends Controller
     public function delete($id){
         $this->authorize('modules', 'product.catalogue.destroy');
         $config['seo'] = __('messages.productCatalogue');
-        $productCatalogue = $this->productCatalogueRepository->getProductCatalogueById($id, null);
+        $productCatalogue = $this->productCatalogueRepository->getProductCatalogueById($id, $this->language);
         $template = 'backend.product.catalogue.delete';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -134,7 +130,7 @@ class ProductCatalogueController extends Controller
     }
 
     public function destroy(DeleteProductCatalogueRequest $request, $id){
-        if($this->productCatalogueService->destroy($id, null)){
+        if($this->productCatalogueService->destroy($id, $this->language)){
             return redirect()->route('product.catalogue.index')->with('success','Xóa bản ghi thành công');
         }
         return redirect()->route('product.catalogue.index')->with('error','Xóa bản ghi không thành công. Hãy thử lại');

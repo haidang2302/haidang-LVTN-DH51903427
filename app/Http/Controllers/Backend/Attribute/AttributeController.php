@@ -10,29 +10,44 @@ use App\Repositories\Interfaces\AttributeRepositoryInterface  as AttributeReposi
 use App\Http\Requests\Attribute\StoreAttributeRequest;
 use App\Http\Requests\Attribute\UpdateAttributeRequest;
 use App\Classes\Nestedsetbie;
+use App\Models\Language;
 
 class AttributeController extends Controller
 {
     protected $attributeService;
     protected $attributeRepository;
     protected $languageRepository;
-    
+    protected $language;
 
     public function __construct(
         AttributeService $attributeService,
         AttributeRepository $attributeRepository,
     ){
-        
+        $this->middleware(function($request, $next){
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
+            $this->initialize();
+            return $next($request);
+        });
 
         $this->attributeService = $attributeService;
         $this->attributeRepository = $attributeRepository;
-        
+        $this->initialize();
         
     }
 
+    private function initialize(){
+        $this->nestedset = new Nestedsetbie([
+            'table' => 'attribute_catalogues',
+            'foreignkey' => 'attribute_catalogue_id',
+            'language_id' =>  $this->language,
+        ]);
+    } 
+
     public function index(Request $request){
         $this->authorize('modules', 'attribute.index');
-        $attributes = $this->attributeService->paginate($request, null);
+        $attributes = $this->attributeService->paginate($request, $this->language);
         $config = [
             'js' => [
                 'backend/js/plugins/switchery/switchery.js',
@@ -46,12 +61,7 @@ class AttributeController extends Controller
         ];
         $config['seo'] = __('messages.attribute');
         $template = 'backend.attribute.attribute.index';
-        $nestedset = new Nestedsetbie([
-            'table' => 'attribute_catalogues',
-            'foreignkey' => 'attribute_catalogue_id',
-            'language_id' => null,
-        ]);
-        $dropdown = $nestedset->Dropdown();
+        $dropdown  = $this->nestedset->Dropdown();
         return view('backend.dashboard.layout', compact(
             'template',
             'config',
@@ -65,12 +75,7 @@ class AttributeController extends Controller
         $config = $this->configData();
         $config['seo'] = __('messages.attribute');
         $config['method'] = 'create';
-        $nestedset = new Nestedsetbie([
-            'table' => 'attribute_catalogues',
-            'foreignkey' => 'attribute_catalogue_id',
-            'language_id' => null,
-        ]);
-        $dropdown = $nestedset->Dropdown();
+        $dropdown  = $this->nestedset->Dropdown();
         $template = 'backend.attribute.attribute.store';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -80,7 +85,7 @@ class AttributeController extends Controller
     }
 
     public function store(StoreAttributeRequest $request){
-        if($this->attributeService->create($request, null)){
+        if($this->attributeService->create($request, $this->language)){
             return redirect()->route('attribute.index')->with('success','Thêm mới bản ghi thành công');
         }
         return redirect()->route('attribute.index')->with('error','Thêm mới bản ghi không thành công. Hãy thử lại');
@@ -88,17 +93,12 @@ class AttributeController extends Controller
 
     public function edit($id, Request $request){
         $this->authorize('modules', 'attribute.update');
-        $attribute = $this->attributeRepository->getAttributeById($id, null);
+        $attribute = $this->attributeRepository->getAttributeById($id, $this->language);
         $queryUrl = $request->getQueryString();
         $config = $this->configData();
         $config['seo'] = __('messages.attribute');
         $config['method'] = 'edit';
-        $nestedset = new Nestedsetbie([
-            'table' => 'attribute_catalogues',
-            'foreignkey' => 'attribute_catalogue_id',
-            'language_id' => null,
-        ]);
-        $dropdown = $nestedset->Dropdown();
+        $dropdown  = $this->nestedset->Dropdown();
         $album = json_decode($attribute->album);
         $template = 'backend.attribute.attribute.store';
         return view('backend.dashboard.layout', compact(
@@ -113,7 +113,7 @@ class AttributeController extends Controller
 
     public function update($id, UpdateAttributeRequest $request){
         $queryUrl = base64_decode($request->getQueryString());
-        if($this->attributeService->update($id, $request, null)){
+        if($this->attributeService->update($id, $request, $this->language)){
             return redirect()->route('attribute.index',$queryUrl)->with('success','Cập nhật bản ghi thành công');
         }
         return redirect()->route('attribute.index')->with('error','Cập nhật bản ghi không thành công. Hãy thử lại');
@@ -122,7 +122,7 @@ class AttributeController extends Controller
     public function delete($id){
         $this->authorize('modules', 'attribute.destroy');
         $config['seo'] = __('messages.attribute');
-        $attribute = $this->attributeRepository->getAttributeById($id, null);
+        $attribute = $this->attributeRepository->getAttributeById($id, $this->language);
         $template = 'backend.attribute.attribute.delete';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -132,7 +132,7 @@ class AttributeController extends Controller
     }
 
     public function destroy($id){
-        if($this->attributeService->destroy($id, null)){
+        if($this->attributeService->destroy($id, $this->language)){
             return redirect()->route('attribute.index')->with('success','Xóa bản ghi thành công');
         }
         return redirect()->route('attribute.index')->with('error','Xóa bản ghi không thành công. Hãy thử lại');

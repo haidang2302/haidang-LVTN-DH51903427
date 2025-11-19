@@ -32,11 +32,37 @@ class AttributeService extends BaseService implements AttributeServiceInterface
     }
 
     public function paginate($request, $languageId){
-        $perPage = $request->integer('perpage') ?: 20;
-        
-        // Sử dụng method paginate() mới từ repository (không JOIN language)
-        $attributes = $this->attributeRepository->paginate($perPage);
+        $perPage = $request->integer('perpage');
+        $condition = [
+            'keyword' => addslashes($request->input('keyword')),
+            'publish' => $request->integer('publish'),
+            'where' => [
+                ['tb2.language_id', '=', $languageId],
+            ],
+        ];
+        $paginationConfig = [
+            'path' => 'attribute.index', 
+            'groupBy' => $this->paginateSelect()
+        ];
+        $orderBy = ['attributes.id', 'DESC'];
+        $relations = ['attribute_catalogues'];
+        $rawQuery = $this->whereRaw($request, $languageId);
+        // dd($rawQuery);
+        $joins = [
+            ['attribute_language as tb2', 'tb2.attribute_id', '=', 'attributes.id'],
+            ['attribute_catalogue_attribute as tb3', 'attributes.id', '=', 'tb3.attribute_id'],
+        ];
 
+        $attributes = $this->attributeRepository->pagination(
+            $this->paginateSelect(), 
+            $condition, 
+            $perPage,
+            $paginationConfig,  
+            $orderBy,
+            $joins,  
+            $relations,
+            $rawQuery
+        ); 
         return $attributes;
     }
 
@@ -45,9 +71,9 @@ class AttributeService extends BaseService implements AttributeServiceInterface
         try{
             $attribute = $this->createAttribute($request);
             if($attribute->id > 0){
-            
+                $this->updateLanguageForAttribute($attribute, $request, $languageId);
                 $this->updateCatalogueForAttribute($attribute, $request);
-                
+                $this->createRouter($attribute, $request, $this->controllerName, $languageId);
             }
             DB::commit();
             return true;
@@ -64,15 +90,17 @@ class AttributeService extends BaseService implements AttributeServiceInterface
         try{
             $attribute = $this->attributeRepository->findById($id);
             if($this->uploadAttribute($attribute, $request)){
-                
+                $this->updateLanguageForAttribute($attribute, $request, $languageId);
                 $this->updateCatalogueForAttribute($attribute, $request);
-                
+                $this->updateRouter(
+                    $attribute, $request, $this->controllerName, $languageId
+                );
             }
             DB::commit();
             return true;
         }catch(\Exception $e ){
             DB::rollBack();
-           
+            // Log::error($e->getMessage());
             echo $e->getMessage();die();
             return false;
         }
@@ -107,12 +135,12 @@ class AttributeService extends BaseService implements AttributeServiceInterface
         return $this->attributeRepository->update($attribute->id, $payload);
     }
 
-    // private function updateLanguageForAttribute($attribute, $request, $languageId){
-    //     $payload = $request->only($this->payloadLanguage());
-    //     $payload = $this->formatLanguagePayload($payload, $attribute->id, $languageId);
-    //     $attribute->attribute_language()->detach([$languageId, $attribute->id]);
-    //     return $this->attributeRepository->createPivot($attribute, $payload, 'attribute_language');
-    // }
+    private function updateLanguageForAttribute($attribute, $request, $languageId){
+        $payload = $request->only($this->payloadLanguage());
+        $payload = $this->formatLanguagePayload($payload, $attribute->id, $languageId);
+        $attribute->languages()->detach([$languageId, $attribute->id]);
+        return $this->attributeRepository->createPivot($attribute, $payload, 'languages');
+    }
 
     private function updateCatalogueForAttribute($attribute, $request){
         $attribute->attribute_catalogues()->sync($this->catalogue($request));
@@ -167,24 +195,17 @@ class AttributeService extends BaseService implements AttributeServiceInterface
         ];
     }
 
-    public function payload(){
+    private function payload(){
         return [
             'follow',
             'publish',
             'image',
             'album',
             'attribute_catalogue_id',
-            'name',
-            'canonical',
-            'description',
-            'content',
-            'meta_title',
-            'meta_keyword',
-            'meta_description',
         ];
     }
 
-    public function payloadLanguage(){
+    private function payloadLanguage(){
         return [
             'name',
             'description',

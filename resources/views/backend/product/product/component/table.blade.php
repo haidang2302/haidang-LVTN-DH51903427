@@ -9,7 +9,7 @@
             <input type="checkbox" value="" id="checkAll" class="input-checkbox">
         </th>
         <th style="width:700px;">{{ __('messages.tableName') }}</th>
-        
+        @include('backend.dashboard.component.languageTh')
     <th style="width:80px;" class="text-center">Số lượng</th>
     <th style="width:80px;" class="text-center">{{ __('messages.tableOrder') }}</th>
         <th class="text-center" style="width:100px;">{{ __('messages.tableStatus') }}</th>
@@ -42,7 +42,7 @@
                         </div>
                     </div>
                 </td>
-                
+                @include('backend.dashboard.component.languageTd', ['model' => $product, 'modeling' => 'Product'])
                 <td class="text-center">
                     {{ $product->quantity ?? 0 }}
                 </td>

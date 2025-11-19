@@ -2,24 +2,37 @@
 
 namespace App\Repositories;
 
+use App\Models\ProductVariant;
+use App\Repositories\Interfaces\ProductVariantRepositoryInterface;
 use App\Repositories\BaseRepository;
 
-class ProductVariantRepository extends BaseRepository
+/**
+ * Class UserService
+ * @package App\Services
+ */
+class ProductVariantRepository extends BaseRepository implements ProductVariantRepositoryInterface
 {
     protected $model;
 
-    public function __construct()
-    {
-        // Tạm thời để trống
+    public function __construct(
+        ProductVariant $model
+    ){
+        $this->model = $model;
     }
 
-    public function findVariant($attributeId, $productId, $language)
-    {
-        return null;
+    public function findVariant($code, $productId, $languageId){
+       $code = trim($code);
+        return $this->model->where(
+            [
+                ['code', '=', $code],
+                ['product_id', '=', $productId]
+            ]
+        )
+        ->with('languages', function($query) use ($languageId){
+            $query->where('language_id', $languageId);
+        })
+        ->first();
     }
 
-    public function findByCondition($conditions = [], $flag = false, $relation = [])
-    {
-        return null;
-    }
+    
 }

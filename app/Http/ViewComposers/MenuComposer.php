@@ -10,31 +10,31 @@ class MenuComposer
     protected $language;
 
     public function __construct(
-        MenuCatalogueRepository $menuCatalogueRepository
+        MenuCatalogueRepository $menuCatalogueRepository,
+        $language
     ){
         $this->menuCatalogueRepository = $menuCatalogueRepository;
-        $this->language = 1; // Default language ID
+        $this->language = $language;
     }
 
     public function compose(View $view)
     {
-        // Temporary disabled - method findByCondition not available
-        $menus = [];
-        
-        // $agrument = $this->agrument($this->language);
-        // $menuCatalogue = $this->menuCatalogueRepository->findByCondition(...$agrument);
+
+        $agrument = $this->agrument($this->language);
+        $menuCatalogue = $this->menuCatalogueRepository->findByCondition(...$agrument);
        
-        // $menus = [];
-        // $htmlType = ['main-menu'];
-        // if(count($menuCatalogue)){
-        //     foreach($menuCatalogue as $key => $val){
-        //         $type = (in_array($val->keyword, $htmlType)) ? 'html' : 'array';
-        //         if($type == 'html'){
-        //             $menus['mobile'] = recursive($val->menus);
-        //         }
-        //         $menus[$val->keyword] = frontend_recursive_menu(recursive($val->menus), 0, 1, $type);
-        //     }
-        // }
+        $menus = [];
+        $htmlType = ['main-menu'];
+        if(count($menuCatalogue)){
+            foreach($menuCatalogue as $key => $val){
+                $type = (in_array($val->keyword, $htmlType)) ? 'html' : 'array';
+                if($type == 'html'){
+                    $menus['mobile'] = recursive($val->menus);
+                }
+                $menus[$val->keyword] = frontend_recursive_menu(recursive($val->menus), 0, 1, $type);
+            }
+        }
+
 
         $view->with('menu', $menus);
     }

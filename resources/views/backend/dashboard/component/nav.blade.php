@@ -9,7 +9,13 @@
             </form>
         </div>
         <ul class="nav navbar-top-links navbar-right">
-            
+            <li>
+                <div class="uk-flex uk-flex-middle">
+                    @foreach($languages as $key => $val)
+                    <a href="{{ route('language.switch', $val->id) }}" class="image img-cover language-item {{ ($val->current == 1) ? 'active' : '' }}"><img src="{{ image($val->image) }}" alt=""></a>
+                    @endforeach
+                </div>
+            </li>
             <li class="dropdown">
                 <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
                     <i class="fa fa-envelope"></i>  <span class="label label-warning">16</span>

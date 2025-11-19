@@ -32,6 +32,21 @@
                         $catCanonical = write_url($category->languages->first()->pivot->canonical)
                     @endphp
                     <div class="panel-product">
+                        {{-- <style>
+                            .main-heading:before {
+                                filter: brightness(96%);
+                                content: '';
+                                display: block;
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                width: 120px;
+                                height: 40px;
+                            
+                                background-size: 100% !important;
+                                background: url({{ $system['homepage_logo'] }}) 100% no-repeat;
+                            }
+                        </style> --}}
                         <div class="main-heading">
                             <div class="panel-head">
                                 <div class="uk-flex uk-flex-middle uk-flex-space-between">
@@ -57,7 +72,7 @@
             </div>
         </div>
 
-        
+        {{-- News section đã được xóa --}}
 
     </div>
 @endsection

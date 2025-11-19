@@ -7,6 +7,7 @@ use App\Services\BaseService;
 use App\Repositories\Interfaces\ProductCatalogueRepositoryInterface as ProductCatalogueRepository;
 use App\Repositories\Interfaces\AttributeCatalogueRepositoryInterface as AttributeCatalogueRepository;
 use App\Repositories\Interfaces\AttributeRepositoryInterface as AttributeRepository;
+use App\Repositories\Interfaces\RouterRepositoryInterface as RouterRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
@@ -26,7 +27,7 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
     protected $productCatalogueRepository;
     protected $attributeCatalogueRepository;
     protected $attributeRepository;
-    
+    protected $routerRepository;
     protected $nestedset;
     protected $language;
     protected $controllerName = 'ProductCatalogueController';
@@ -36,12 +37,12 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
         ProductCatalogueRepository $productCatalogueRepository,
         AttributeCatalogueRepository $attributeCatalogueRepository,
         AttributeRepository $attributeRepository,
-        // RouterRepository $routerRepository,
+        RouterRepository $routerRepository,
     ){
         $this->productCatalogueRepository = $productCatalogueRepository;
         $this->attributeCatalogueRepository = $attributeCatalogueRepository;
         $this->attributeRepository = $attributeRepository;
-        // $this->routerRepository = $routerRepository;
+        $this->routerRepository = $routerRepository;
     }
 
     public function paginate($request, $languageId){
@@ -49,13 +50,20 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
         $condition = [
             'keyword' => addslashes($request->input('keyword')),
             'publish' => $request->integer('publish'),
+            'where' => [
+                ['tb2.language_id', '=', $languageId]
+            ]
         ];
         $productCatalogues = $this->productCatalogueRepository->pagination(
-            ['product_catalogues.id', 'product_catalogues.publish', 'product_catalogues.image', 'product_catalogues.level', 'product_catalogues.order', 'product_catalogues.name', 'product_catalogues.canonical'], 
+            $this->paginateSelect(), 
             $condition, 
             $perPage,
             ['path' => 'product/catalogue/index'],  
-            ['product_catalogues.lft', 'ASC']
+            ['product_catalogues.lft', 'ASC'],
+            [
+                ['product_catalogue_language as tb2','tb2.product_catalogue_id', '=' , 'product_catalogues.id']
+            ], 
+            ['languages']
         );
 
         return $productCatalogues;
@@ -66,7 +74,8 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
         try{
             $productCatalogue = $this->createCatalogue($request);
             if($productCatalogue->id > 0){
-                
+                $this->updateLanguageForCatalogue($productCatalogue, $request, $languageId);
+                $this->createRouter($productCatalogue, $request, $this->controllerName, $languageId);
                 $this->nestedset = new Nestedsetbie([
                     'table' => 'product_catalogues',
                     'foreignkey' => 'product_catalogue_id',
@@ -87,14 +96,13 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
     public function update($id, $request, $languageId){
         DB::beginTransaction();
         try{
-            $productCatalogue = $this->productCatalogueRepository->find($id);
-            if(!$productCatalogue){
-                DB::rollBack();
-                return false;
-            }
+            $productCatalogue = $this->productCatalogueRepository->findById($id);
             $flag = $this->updateCatalogue($productCatalogue, $request);
             if($flag == TRUE){
-                
+                $this->updateLanguageForCatalogue($productCatalogue, $request, $languageId);
+                $this->updateRouter(
+                    $productCatalogue, $request, $this->controllerName, $languageId
+                );
                 $this->nestedset = new Nestedsetbie([
                     'table' => 'product_catalogues',
                     'foreignkey' => 'product_catalogue_id',
@@ -106,8 +114,8 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
             return true;
         }catch(\Exception $e ){
             DB::rollBack();
-            \Log::error('ProductCatalogue Update Error: ' . $e->getMessage());
-            \Log::error('Line: ' . $e->getLine());
+            // Log::error($e->getMessage());
+            echo $e->getMessage();die();
             return false;
         }
     }
@@ -136,7 +144,7 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
         }
     }
 
-    public function createCatalogue($request){
+    private function createCatalogue($request){
         $payload = $request->only($this->payload());
         $payload['album'] = $this->formatAlbum($request);
         $payload['user_id'] = Auth::id();
@@ -147,15 +155,17 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
     private function updateCatalogue($productCatalogue, $request){
         $payload = $request->only($this->payload());
         $payload['album'] = $this->formatAlbum($request);
-        if(isset($payload['canonical'])){
-            $payload['canonical'] = Str::slug($payload['canonical']);
-        }
-        \Log::info('Update Payload:', $payload);
         $flag = $this->productCatalogueRepository->update($productCatalogue->id, $payload);
         return $flag;
     }
 
-    
+    private function updateLanguageForCatalogue($productCatalogue, $request, $languageId){
+        $payload = $this->formatLanguagePayload($productCatalogue, $request, $languageId);
+        $productCatalogue->languages()->detach([$languageId, $productCatalogue->id]);
+        $language = $this->productCatalogueRepository->createPivot($productCatalogue, $payload, 'languages');
+        return $language;
+    }
+
     private function formatLanguagePayload($productCatalogue, $request, $languageId){
         $payload = $request->only($this->payloadLanguage());
         $payload['canonical'] = Str::slug($payload['canonical']);
@@ -264,7 +274,7 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
         ];
     }
 
-    public function payload(){
+    private function payload(){
         return [
             'parent_id',
             'follow',
@@ -272,17 +282,9 @@ class ProductCatalogueService extends BaseService implements ProductCatalogueSer
             'image',
             'album',
             'icon',
-            'name',
-            'description',
-            'content',
-            'meta_title',
-            'meta_keyword',
-            'meta_description',
-            'canonical'
         ];
     }
-
-    public function payloadLanguage(){
+    private function payloadLanguage(){
         return [
             'name',
             'description',

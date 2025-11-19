@@ -3,9 +3,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1,user-scalable=0">
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
 <meta name="robots" content="index,follow"/>
-<meta name="author" content="{{ $system['homepage_company'] ?? config('app.name') }}"/>
-<meta name="copyright" content="{{ $system['homepage_company'] ?? config('app.name') }}" />
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="author" content="{{ $system['homepage_company'] ?? '' }}"/>
+<meta name="copyright" content="{{ $system['homepage_company'] ?? '' }}"/>
+<link rel="icon" href="{{ $system['homepage_favicon'] ?? '' }}" type="image/png" sizes="30x30">
 <meta http-equiv="refresh" content="1800" />
 <link rel="icon" href="{{ $system['homepage_favicon'] ?? '' }}" type="image/png" sizes="30x30">
 <!-- GOOGLE -->

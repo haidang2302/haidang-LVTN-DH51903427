@@ -6,35 +6,38 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Services\Interfaces\PromotionServiceInterface  as PromotionService;
-// ...existing use statements...
+use App\Repositories\Interfaces\PromotionRepositoryInterface as PromotionRepository;
 use App\Repositories\Interfaces\LanguageRepositoryInterface as LanguageRepository;
 use App\Repositories\Interfaces\SourceRepositoryInterface as SourceRepository;
 
 use App\Http\Requests\Promotion\StorePromotionRequest;
 use App\Http\Requests\Promotion\UpdatePromotionRequest;
 
+use App\Models\Language;
 use Illuminate\Support\Collection;
 
 class PromotionController extends Controller
 {
     protected $promotionService;
-    // ...existing properties...
+    protected $promotionRepository;
     protected $languageRepository;
     protected $sourceRepository;
     protected $language;
 
     public function __construct(
         PromotionService $promotionService,
-    // ...existing constructor params...
+        PromotionRepository $promotionRepository,
         LanguageRepository $languageRepository,
         SourceRepository $sourceRepository,
     ){
         $this->promotionService = $promotionService;
-    // ...existing constructor body...
+        $this->promotionRepository = $promotionRepository;
         $this->languageRepository = $languageRepository;
         $this->sourceRepository = $sourceRepository;
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }
@@ -88,7 +91,7 @@ class PromotionController extends Controller
 
     public function edit($id){
         $this->authorize('modules', 'promotion.update');
-    $promotion = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $promotion = $this->promotionRepository->findById($id);
         $sources = $this->sourceRepository->all();
         // dd($promotion->discountInformation);
         $config = $this->config();
@@ -113,7 +116,7 @@ class PromotionController extends Controller
     public function delete($id){
         $this->authorize('modules', 'promotion.destroy');
         $config['seo'] = __('messages.promotion');
-    $promotion = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $promotion = $this->promotionRepository->findById($id);
         $template = 'backend.promotion.promotion.delete';
         return view('backend.dashboard.layout', compact(
             'template',
@@ -131,7 +134,7 @@ class PromotionController extends Controller
 
     public function translate($languageId, $promotionId){
         $this->authorize('modules', 'promotion.translate');
-    $promotion = null; // Đã xóa repository, cần xử lý lại logic nếu cần
+        $promotion = $this->promotionRepository->findById($promotionId);
         $promotion->jsonDescription = $promotion->description;
         $promotion->description = $promotion->description[$this->language];
 

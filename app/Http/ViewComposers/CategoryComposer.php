@@ -10,10 +10,11 @@ class CategoryComposer
     protected $language;
 
     public function __construct(
-        ProductCatalogueRepository $productCatalogueRepository
+        ProductCatalogueRepository $productCatalogueRepository,
+        $language
     ){
         $this->productCatalogueRepository = $productCatalogueRepository;
-        $this->language = 1; // Default language ID
+        $this->language = $language;
     }
 
     public function compose(View $view)

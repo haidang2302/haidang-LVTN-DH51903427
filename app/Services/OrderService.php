@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Services\Interfaces\OrderServiceInterface;
 use App\Repositories\Interfaces\OrderRepositoryInterface as OrderRepository;
-use App\Repositories\ProductVariantRepository;
+use App\Repositories\Interfaces\ProductVariantRepositoryInterface  as ProductVariantRepository;
 use App\Repositories\Interfaces\ProductRepositoryInterface  as ProductRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

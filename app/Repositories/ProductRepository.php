@@ -37,7 +37,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'products.attribute',
                 'products.variant',
                 'products.warranty',
-                // 'tb2.name',
+                'tb2.name',
                 'tb2.description',
                 'tb2.content',
                 'tb2.meta_title',
@@ -46,7 +46,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'tb2.canonical',
             ]
         )
-    // ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
+        ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
         ->with([
             'product_catalogues',
             'product_variants' => function ($query) use ($language_id) {
@@ -56,11 +56,11 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     }]);
                 }]);
             },
-            'reviews'
+            
         ])
         ->where('tb2.language_id', '=', $language_id)
         ->where('products.publish', '=', 2)
-    // ->where('tb2.name', 'LIKE', '%'.$keyword.'%')
+        ->where('tb2.name', 'LIKE', '%'.$keyword.'%')
         ->get();
     }
 
@@ -79,7 +79,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'products.attributeCatalogue',
                 'products.attribute',
                 'products.variant',
-                // 'tb2.name',
+                'tb2.name',
                 'tb2.description',
                 'tb2.content',
                 'tb2.meta_title',
@@ -88,7 +88,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'tb2.canonical',
             ]
         )
-    // ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
+        ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
         ->with([
             'product_catalogues',
             'product_variants' => function ($query) use ($language_id) {
@@ -98,7 +98,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     }]);
                 }]);
             },
-            'reviews'
+            
         ])
         ->where('tb2.language_id', '=', $language_id)
         ->where('products.publish', '=', 2)
@@ -124,7 +124,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'products.qrcode',
                 'products.warranty',
                 'products.iframe',
-                // 'tb2.name',
+                'tb2.name',
                 'tb2.description',
                 'tb2.content',
                 'tb2.meta_title',
@@ -133,7 +133,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 'tb2.canonical',
             ]
         )
-    // ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
+        ->join('product_language as tb2', 'tb2.product_id', '=','products.id')
         ->with([
             'product_catalogues',
             'product_variants' => function ($query) use ($language_id) {
@@ -143,7 +143,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     }]);
                 }]);
             },
-            'reviews'
+            
         ])
         ->where('tb2.language_id', '=', $language_id)
         // ->where([$condition])
@@ -156,14 +156,14 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'products.id',
             'products.image',
             'products.warranty',
-            // 'tb2.name',
+            'tb2.name',
             'tb3.uuid',
             'tb3.id as product_variant_id',
-            // DB::raw('CONCAT(tb2.name, " - ", COALESCE(tb4.name, " Default")) as variant_name'),
+            DB::raw('CONCAT(tb2.name, " - ", COALESCE(tb4.name, " Default")) as variant_name'),
             DB::raw('COALESCE(tb3.sku, products.code) as sku'),
             DB::raw('COALESCE(tb3.price, products.price) as price'),
         ]) ;
-    // $query->join('product_language as tb2','products.id', '=', 'tb2.product_id');
+        $query->join('product_language as tb2','products.id', '=', 'tb2.product_id');
         $query->leftJoin('product_variants as tb3','products.id', '=', 'tb3.product_id');
         $query->leftJoin('product_variant_language as tb4', 'tb3.id', '=', 'tb4.product_variant_id');
 
@@ -221,7 +221,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         }
 
         $query->groupBy($orderBy);
-        $query->with(['reviews', 'languages', 'product_catalogues']);
+        $query->with([ 'languages', 'product_catalogues']);
 
         return $query->paginate($perpage);
     }   

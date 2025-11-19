@@ -21,25 +21,11 @@ class Nestedsetbie{
 		$foreignkey = (isset($this->params['foreignkey'])) ? $this->params['foreignkey'] : 'post_catalogue_id';
 		$moduleExtract = explode('_', $this->params['table']);
 		$join = (isset($this->params['isMenu']) && $this->params['isMenu'] == true ) ? substr($moduleExtract[0], 0, -1) : $moduleExtract[0];
-		
-		// Check if 'name' column exists in the table
-		$columns = DB::getSchemaBuilder()->getColumnListing($this->params['table']);
-		$hasNameColumn = in_array('name', $columns);
-		
-		if ($hasNameColumn) {
-			// Nếu có cột name, lấy trực tiếp
-			$result = DB::table($this->params['table'].' as tb1')
-			->select('tb1.id','tb1.name','tb1.parent_id','tb1.lft','tb1.rgt','tb1.level','tb1.order')
-			->whereNull('tb1.deleted_at')
-			->orderBy('tb1.lft','asc')->get()->toArray();
-		} else {
-			// Nếu chưa có cột name, JOIN với language table (cách cũ)
-			$result = DB::table($this->params['table'].' as tb1')
-			->select('tb1.id','tb2.name','tb1.parent_id','tb1.lft','tb1.rgt','tb1.level','tb1.order')
-			->join($join.$catalogue.'_language as tb2', 'tb1.id', '=', 'tb2.'.$foreignkey.'')
-			->where('tb2.language_id','=', $this->params['language_id'])->whereNull('tb1.deleted_at')
-			->orderBy('tb1.lft','asc')->get()->toArray();
-		}
+		$result = DB::table($this->params['table'].' as tb1')
+		->select('tb1.id','tb2.name','tb1.parent_id','tb1.lft','tb1.rgt','tb1.level','tb1.order')
+		->join($join.$catalogue.'_language as tb2', 'tb1.id', '=', 'tb2.'.$foreignkey.'')
+		->where('tb2.language_id','=', $this->params['language_id'])->whereNull('tb1.deleted_at')
+		->orderBy('tb1.lft','asc')->get()->toArray();
 		$this->data = $result;
 	}
 

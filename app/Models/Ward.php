@@ -7,19 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ward extends Model
 {
-	use HasFactory;
+    use HasFactory;
 
-	protected $fillable = [
-		'name',
-		'district_code',
-	];
+    protected $fillable = [
+        'name',
+    ];
 
-	protected $table = 'wards';
-	protected $primaryKey = 'code';
-	public $incrementing = false;
+    protected $table = 'wards';
+    protected $primaryKey = 'code';
+    public $incrementing = false; 
 
-	public function district()
-	{
-		return $this->belongsTo(District::class, 'district_code', 'code');
-	}
+
+    public function districts(){
+        return $this->belongsTo(District::class, 'district_code', 'code');
+    }
 }

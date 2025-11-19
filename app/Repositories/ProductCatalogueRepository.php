@@ -33,15 +33,17 @@ class ProductCatalogueRepository extends BaseRepository implements ProductCatalo
                 'product_catalogues.publish',
                 'product_catalogues.follow',
                 'product_catalogues.attribute',
-                'product_catalogues.name',
-                'product_catalogues.description',
-                'product_catalogues.content',
-                'product_catalogues.meta_title',
-                'product_catalogues.meta_keyword',
-                'product_catalogues.meta_description',
-                'product_catalogues.canonical',
+                'tb2.name',
+                'tb2.description',
+                'tb2.content',
+                'tb2.meta_title',
+                'tb2.meta_keyword',
+                'tb2.meta_description',
+                'tb2.canonical',
             ]
         )
+        ->join('product_catalogue_language as tb2', 'tb2.product_catalogue_id', '=','product_catalogues.id')
+        ->where('tb2.language_id', '=', $language_id)
         ->find($id);
     }
 

@@ -37,6 +37,7 @@ class CrawlerController extends FrontendController
 
         DB::beginTransaction();
         try{
+
             $url = 'https://vinamart24h.vn/';
             echo 'Đang tiến hành crawler danh mục sản phẩm';
             $html = file_get_contents($url);
@@ -70,15 +71,23 @@ class CrawlerController extends FrontendController
             $this->nestedset = new Nestedsetbie([
                 'table' => 'product_catalogues',
                 'foreignkey' => 'product_catalogue_id',
+                'language_id' =>  1 ,
             ]);
-            // Đã loại bỏ các truy vấn và thao tác liên quan đến repository không tồn tại và Nestedsetbie
+            $this->nestedset->Get('level ASC, order ASC');
+            $this->nestedset->Recursive(0, $this->nestedset->Set());
+            $this->nestedset->Action();
+    
             DB::commit();
+
             return redirect()->route('crawler.update');
+            
         }catch(\Exception $e ){
             DB::rollBack();
             // Log::error($e->getMessage());
-            return response($e->getMessage(), 500);
+            echo $e->getMessage();die();
+            return false;
         }
+        
     }
 
     public function crawlerUpdate(){
@@ -137,9 +146,10 @@ class CrawlerController extends FrontendController
         }catch(\Exception $e ){
             DB::rollBack();
             // Log::error($e->getMessage());
-            return response($e->getMessage(), 500);
+            echo $e->getMessage();die();
+            return false;
         }
-        }
+    }
 
 
     public function crawlerProduct(Request $request){
@@ -159,7 +169,14 @@ class CrawlerController extends FrontendController
             }
     
             echo 'Đang tiến hành crawler dữ liệu sản phẩm của danh mục: '. $productCatalogue->languages->first()->pivot->name.'<br>';
-                    // Đã loại bỏ các truy vấn và thao tác liên quan đến repository không tồn tại
+            
+            $url = $productCatalogue->languages->first()->pivot->url;
+            $page = ($request->input('page')) ? $request->input('page') : 1;
+            echo 'Trang-'.$page;
+            $html = @file_get_contents($url.'page/'.$page);
+
+
+            if($html === false){
                 $page = 1;
                 $this->productCatalogueRepository->update($productCatalogue->id, ['check' => 0]);
                 echo '<meta http-equiv="refresh" content="0; URL=http://127.0.0.1:8000/crawlerProduct?page='.$page.'">';
@@ -195,7 +212,12 @@ class CrawlerController extends FrontendController
 
             foreach($temp as $key => $val){
 
-                // Đã loại bỏ các truy vấn và thao tác liên quan đến product_language và các repository không tồn tại
+                $checkProductExists = DB::table('product_language')->where('canonical', '=', $tempTranslate[$key]['canonical'])->exists();
+                if(!$checkProductExists){
+                    $product = $this->productRepository->create($val); // thêm sản phẩm.. 
+                    $this->productRepository->createPivot($product, $tempTranslate[$key], 'languages');
+                    $this->productRepository->createPivot($product, ['product_catalogue_id' => $productCatalogue->id], 'product_catalogues');
+                }
             }
 
 
@@ -211,9 +233,9 @@ class CrawlerController extends FrontendController
         }catch(\Exception $e ){
             DB::rollBack();
             // Log::error($e->getMessage());
-            return response($e->getMessage(), 500);
+            echo $e->getMessage();die();
+            return false;
         }
-    // ...existing code...
 
 
     }
@@ -384,9 +406,9 @@ class CrawlerController extends FrontendController
         }catch(\Exception $e ){
             DB::rollBack();
             // Log::error($e->getMessage());
-            return response($e->getMessage(), 500);
+            echo $e->getMessage();die();
+            return false;
         }
-    }
     }
 
 }

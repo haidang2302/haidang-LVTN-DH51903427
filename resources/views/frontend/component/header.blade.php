@@ -1,7 +1,7 @@
 <div id="header" class="pc-header uk-visible-large">
     <div class="upper">
         <div class="uk-container uk-container-center">
-            <div class="company-name">{{ $system['homepage_company'] ?? config('app.name') }}</div>
+            <div class="company-name">{{ $system['homepage_company'] ?? '' }}</div>
         </div>
     </div>
     <div class="middle">
@@ -72,6 +72,12 @@
                             </div>
 
                         @endif
+                        
+                        
+                        {{-- <div class="header-hotline">
+                            <div class="text">Hotline</div>
+                            <div class="hotline-number">{{ $system['contact_hotline'] }}</div>
+                        </div> --}}
                     </div>
                 </div>
             </div>
@@ -81,15 +87,20 @@
         <div class="uk-container uk-container-center">
             <div class="uk-grid uk-grid-medium uk-flex uk-flex-middle">
                 <div class="uk-width-large-1-5">
-                    @if(isset($categories) && count($categories))
+                    @if(count($categories))
+                    {{-- <div class="logoScroll">
+                        <a href="" class="image img-cover">
+                            <img src="{{ $system['homepage_logo'] }}" alt="">
+                        </a>
+                    </div> --}}
                     <div class="categories">
                         <div class="category-heading">Danh mục sản phẩm</div>
                         <div class="category-dropdown">
                             <ul class="uk-list uk-clearfix">
                                 @foreach($categories as $key => $val)
                                 @php
-                                    $name = $val->name ?? 'Category ' . $val->id;
-                                    $canonical = $val->canonical ? write_url($val->canonical) : '#';
+                                    $name = $val->languages->first()->pivot->name;
+                                    $canonical = write_url($val->languages->first()->pivot->canonical);
                                 @endphp
                                 <li><a href="{{ $canonical }}" title="{{ $name }}" >{{ $name }} </a></li>
                                 @endforeach
@@ -118,7 +129,7 @@
         <div class="uk-container uk-container-center">
             <div class="uk-flex uk-flex-middle uk-flex-space-between">
                 <div class="mobile-logo">
-                    <a href="." title="{{ $system['seo_meta_title'] ?? config('app.name') }}">
+                    <a href="." title="{{ $system['seo_meta_title'] ?? '' }}">
                         <img src="{{ $system['homepage_logo'] ?? '' }}" alt="Mobile Logo">
                     </a>
                 </div>

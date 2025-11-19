@@ -12,6 +12,7 @@ use App\Repositories\Interfaces\LanguageRepositoryInterface as LanguageRepositor
 use App\Http\Requests\Widget\StoreWidgetRequest;
 use App\Http\Requests\Widget\UpdateWidgetRequest;
 
+use App\Models\Language;
 use Illuminate\Support\Collection;
 
 class WidgetController extends Controller
@@ -30,7 +31,9 @@ class WidgetController extends Controller
         $this->widgetRepository = $widgetRepository;
         $this->languageRepository = $languageRepository;
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }

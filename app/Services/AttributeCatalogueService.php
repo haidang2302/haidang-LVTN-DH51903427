@@ -38,10 +38,25 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
     }
 
     public function paginate($request, $languageId){
-        $perPage = $request->integer('perpage') ?: 20;
-        
-        // Sử dụng method paginate() mới từ repository (không JOIN language)
-        $attributeCatalogues = $this->attributeCatalogueRepository->paginate($perPage);
+        $perPage = $request->integer('perpage');
+        $condition = [
+            'keyword' => addslashes($request->input('keyword')),
+            'publish' => $request->integer('publish'),
+            'where' => [
+                ['tb2.language_id', '=', $languageId]
+            ]
+        ];
+        $attributeCatalogues = $this->attributeCatalogueRepository->pagination(
+            $this->paginateSelect(), 
+            $condition, 
+            $perPage,
+            ['path' => 'attribute.catalogue.index'],  
+            ['attribute_catalogues.lft', 'ASC'],
+            [
+                ['attribute_catalogue_language as tb2','tb2.attribute_catalogue_id', '=' , 'attribute_catalogues.id']
+            ], 
+            ['languages']
+        );
 
         return $attributeCatalogues;
     }
@@ -51,7 +66,8 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
         try{
             $attributeCatalogue = $this->createCatalogue($request);
             if($attributeCatalogue->id > 0){
-               
+                $this->updateLanguageForCatalogue($attributeCatalogue, $request, $languageId);
+                $this->createRouter($attributeCatalogue, $request, $this->controllerName, $languageId);
                 $this->nestedset = new Nestedsetbie([
                     'table' => 'attribute_catalogues',
                     'foreignkey' => 'attribute_catalogue_id',
@@ -75,7 +91,10 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
             $attributeCatalogue = $this->attributeCatalogueRepository->findById($id);
             $flag = $this->updateCatalogue($attributeCatalogue, $request);
             if($flag == TRUE){
-                
+                $this->updateLanguageForCatalogue($attributeCatalogue, $request, $languageId);
+                $this->updateRouter(
+                    $attributeCatalogue, $request, $this->controllerName, $languageId
+                );
                 $this->nestedset = new Nestedsetbie([
                     'table' => 'attribute_catalogues',
                     'foreignkey' => 'attribute_catalogue_id',
@@ -113,17 +132,10 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
         }
     }
 
-    public function createCatalogue($request){
+    private function createCatalogue($request){
         $payload = $request->only($this->payload());
         $payload['album'] = $this->formatAlbum($request);
         $payload['user_id'] = Auth::id();
-        
-        // Tính lft/rgt tạm thời cho nested set
-        $maxRgt = \App\Models\AttributeCatalogue::max('rgt') ?? 0;
-        $payload['lft'] = $maxRgt + 1;
-        $payload['rgt'] = $payload['lft'] + 1;
-        $payload['level'] = 1;
-        
         $attributeCatalogue = $this->attributeCatalogueRepository->create($payload);
         return $attributeCatalogue;
     }
@@ -135,6 +147,23 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
         return $flag;
     }
 
+    private function updateLanguageForCatalogue($attributeCatalogue, $request, $languageId){
+        $payload = $this->formatLanguagePayload($attributeCatalogue, $request, $languageId);
+        $attributeCatalogue->languages()->detach([$languageId, $attributeCatalogue->id]);
+        $language = $this->attributeCatalogueRepository->createPivot($attributeCatalogue, $payload, 'languages');
+        return $language;
+    }
+
+    private function formatLanguagePayload($attributeCatalogue, $request, $languageId){
+        $payload = $request->only($this->payloadLanguage());
+        $payload['canonical'] = Str::slug($payload['canonical']);
+        $payload['language_id'] =  $languageId;
+        $payload['attribute_catalogue_id'] = $attributeCatalogue->id;
+        return $payload;
+    }
+
+   
+    
 
     private function paginateSelect(){
         return [
@@ -148,24 +177,16 @@ class AttributeCatalogueService extends BaseService implements AttributeCatalogu
         ];
     }
 
-    public function payload(){
+    private function payload(){
         return [
             'parent_id',
             'follow',
             'publish',
             'image',
             'album',
-            'name',
-            'description',
-            'content',
-            'meta_title',
-            'meta_keyword',
-            'meta_description',
-            'canonical'
         ];
     }
-    
-    public function payloadLanguage(){
+    private function payloadLanguage(){
         return [
             'name',
             'description',

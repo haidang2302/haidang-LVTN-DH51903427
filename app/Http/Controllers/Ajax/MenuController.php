@@ -8,6 +8,7 @@ use App\Repositories\Interfaces\MenuCatalogueRepositoryInterface  as MenuCatalog
 use App\Services\Interfaces\MenuCatalogueServiceInterface  as MenuCatalogueService;
 use App\Services\Interfaces\MenuServiceInterface  as MenuService;
 use App\Repositories\Interfaces\MenuRepositoryInterface  as MenuRepository;
+use App\Models\Language;
 use App\Http\Requests\Menu\StoreMenuCatalogueRequest;
 
 
@@ -30,7 +31,9 @@ class MenuController extends Controller
         $this->menuService = $menuService;
         $this->menuRepository = $menuRepository;
         $this->middleware(function($request, $next){
-                        $this->language = $language->id;
+            $locale = app()->getLocale(); // vn en cn
+            $language = Language::where('canonical', $locale)->first();
+            $this->language = $language->id;
             return $next($request);
         });
     }

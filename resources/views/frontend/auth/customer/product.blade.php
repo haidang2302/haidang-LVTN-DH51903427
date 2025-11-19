@@ -9,9 +9,9 @@
                 <div class="uk-width-large-4-5">
                     <div class="panel-profile">
                         <div class="panel-head">
-                            <h2 class="heading-2"><span>Danh sách sản phẩm  {{ $construction->name }}</span></h2>
+                            <h2 class="heading-2"><span>Danh sách sản phẩm của công trình {{ $construction->nane }}</span></h2>
                             <div class="description">
-                                Quản lý thông tin chi tiết danh sách sản phẩm{{ $system['homepage_brand'] }}
+                                Quản lý thông tin chi tiết danh sách sản phẩm của công trình tại {{ $system['homepage_brand'] }}
                             </div>
                         </div>
                         <div class="panel-body">

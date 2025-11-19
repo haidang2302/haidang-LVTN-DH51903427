@@ -9,6 +9,7 @@
             <input type="checkbox" value="" id="checkAll" class="input-checkbox">
         </th>
         <th>{{ __('messages.tableName') }}</th>
+        @include('backend.dashboard.component.languageTh')
         <th style="width:80px;" class="text-center">{{ __('messages.tableOrder') }}</th>
         <th class="text-center" style="width:100px;">{{ __('messages.tableStatus') }}</th>
         <th class="text-center" style="width:100px;">{{ __('messages.tableAction') }}</th>
@@ -27,17 +28,17 @@
                             <div class="name"><span class="maintitle">{{ $attribute->name }}</span></div>
                             <div class="catalogue">
                                 <span class="text-danger">{{ __('messages.tableGroup') }} </span>
-                                @if($attribute->attribute_catalogues)
-                                    @foreach($attribute->attribute_catalogues as $val)
-                                        <a href="{{ route('attribute.index', ['attribute_catalogue_id' => $val->id]) }}" title="">{{ $val->name }}</a>
-                                    @endforeach
-                                @endif
+                                @foreach($attribute->attribute_catalogues as $val)
+                                @foreach($val->attribute_catalogue_language as $cat)
+                                <a href="{{ route('attribute.index', ['attribute_catalogue_id' => $val->id]) }}" title="">{{ $cat->name }}</a>
+                                @endforeach
+                                @endforeach
                             </div>
                             
                         </div>
                     </div>
                 </td>
-                
+                @include('backend.dashboard.component.languageTd', ['model' => $attribute, 'modeling' => 'Attribute'])
                 <td>
                     <input type="text" name="order" value="{{ $attribute->order }}" class="form-control sort-order text-right" data-id="{{ $attribute->id }}" data-model="{{ $config['model'] }}">
                 </td>

@@ -26,13 +26,6 @@ class ProductCatalogue extends Model
         'user_id',
         'attribute',
         'check',
-        'name',
-        'canonical',
-        'description',
-        'content',
-        'meta_title',
-        'meta_keyword',
-        'meta_description',
     ];
 
     protected $table = 'product_catalogues';
@@ -41,6 +34,22 @@ class ProductCatalogue extends Model
         'publish' => 2,
     ];
     
+    public function languages(){
+        return $this->belongsToMany(Language::class, 'product_catalogue_language' , 'product_catalogue_id', 'language_id')
+        ->withPivot(
+            'product_catalogue_id',
+            'language_id',
+            'url',
+            'name',
+            'canonical',
+            'meta_title',
+            'meta_keyword',
+            'meta_description',
+            'description',
+            'content'
+        )->withTimestamps();
+    }
+
     protected $casts = [
         'attribute' => 'json',
     ];
@@ -50,7 +59,9 @@ class ProductCatalogue extends Model
     }
 
 
-    
+    public function product_catalogue_language(){
+        return $this->hasMany(ProductCatalogueLanguage::class, 'product_catalogue_id', 'id')->where('language_id','=',1);
+    }
 
     public static function isNodeCheck($id = 0){
         $productCatalogue = ProductCatalogue::find($id);

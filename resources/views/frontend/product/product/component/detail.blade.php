@@ -126,7 +126,7 @@
                 @include('frontend.product.product.component.general')
 
                 {{-- ẩn đánh giá --}}
-                @include('frontend.product.product.component.review', ['model' => $product, 'reviewable' => 'App\Models\Product'])
+                
             </div>
         </div>
         <div class="uk-width-large-1-4 uk-visible-large">
