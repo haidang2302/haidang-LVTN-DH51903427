@@ -8,5 +8,7 @@ namespace App\Repositories\Interfaces;
  */
 interface PromotionRepositoryInterface
 {
-    
+    public function findPromotionByVariantUuid($uuid);
+    public function getPromotionByCartTotal();
 }
+

@@ -67,6 +67,15 @@ return [
                     'title' => 'QL thuộc tính',
                     'route' => 'attribute/index'
                 ],
+                [
+                    'title' => 'QL Nhà cung cấp',
+                    'route' => 'supplier'
+                ],
+                [
+                    'title' => 'Thông báo nhập hàng',
+                    'route' => 'supplier/notifications'
+                ],
+
 
             ]
         ],
@@ -95,7 +104,7 @@ return [
                     'route' => 'customer/index'
                 ],
             ]
-        ],
+        ],*/
         [
             'title' => 'QL Marketing',
             'icon' => 'fa fa-money',
@@ -117,7 +126,7 @@ return [
         //     'name' => ['distribution'],
         //     'route' => 'distribution/index'
         // ],
-        [
+        /*[
             'title' => 'QL Bài viết',
             'icon' => 'fa fa-file',
             'name' => ['post'],

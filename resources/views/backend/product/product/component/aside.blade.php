@@ -16,6 +16,19 @@
                 </div>
             </div>
         </div>
+        <div class="row mb15">
+            <div class="col-lg-12">
+                <div class="form-row">
+                    <label for="supplier_id">Nhà cung cấp</label>
+                    <select name="supplier_id" class="form-control setupSelect2" id="supplier_id">
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        @foreach(\App\Models\Supplier::all() as $supplier)
+                            <option value="{{ $supplier->id }}" {{ (isset($product->supplier_id) && $product->supplier_id == $supplier->id) ? 'selected' : '' }}>{{ $supplier->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
         @php
             $catalogue = [];
             if(isset($product)){
@@ -121,7 +134,7 @@
                 </div>
             </div>
         </div>
-        <div class="form-row">
+       <!-- <div class="form-row">
             <label for="">Mã Nhúng</label>
             <textarea 
                 type="text"
@@ -129,12 +142,12 @@
                 class="form-control"
                 style="height:168px;"
             >{{ old('iframe', ($product->iframe) ?? '') }}</textarea>
-        </div>
+        </div>-->
     </div>
 </div>
 @include('backend.dashboard.component.publish', ['model' => ($product) ?? null])
 
-@if(!empty($product->qrcode))
+<!--@if(!empty($product->qrcode))
 <div class="ibox w">
     <div class="ibox-title">
         <h5>Mã QRCODE</h5>
@@ -149,4 +162,4 @@
         </div>
     </div>
 </div>
-@endif
+@endif-->

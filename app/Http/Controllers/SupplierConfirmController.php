@@ -22,11 +22,16 @@ class SupplierConfirmController extends Controller
         $supplyRequest->status = 'confirmed';
         $supplyRequest->save();
 
+
         // Gửi thông báo cho nhân viên
         $user = \App\Models\User::find($supplyRequest->user_id);
         if ($user) {
-            // Sử dụng notification của Laravel
             $user->notify(new \App\Notifications\SupplyConfirmedNotification($supplyRequest));
+        }
+
+        // Gửi thông báo cho nhà cung cấp
+        if ($supplier) {
+            $supplier->notify(new \App\Notifications\SupplyConfirmedNotification($supplyRequest));
         }
 
         return redirect()->back()->with('success', 'Đã xác nhận gửi hàng cho yêu cầu này.');

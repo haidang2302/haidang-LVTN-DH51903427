@@ -55,6 +55,16 @@
                 <td class="text-center"> 
                     <a href="{{ route('product.edit', [$product->id, $queryUrl ?? 'p']) }}" class="btn btn-success"><i class="fa fa-edit"></i></a>
                     <a href="{{ route('product.delete', $product->id) }}" class="btn btn-danger"><i class="fa fa-trash"></i></a>
+                    @if(($product->quantity ?? 0) < 10)
+                        <form action="{{ route('supply-request.store') }}" method="POST" style="display:inline;">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="quantity" value="{{ 10 - ($product->quantity ?? 0) }}">
+                            <button type="submit" class="btn btn-warning" onclick="return confirm('Bạn có chắc muốn gửi yêu cầu nhập hàng?')">
+                                <i class="fa fa-truck"></i> Gửi yêu cầu nhập hàng
+                            </button>
+                        </form>
+                    @endif
                 </td>
             </tr>
             @endforeach

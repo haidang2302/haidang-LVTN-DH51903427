@@ -10,7 +10,7 @@ use App\Repositories\Interfaces\ProductRepositoryInterface as ProductRepository;
 use App\Repositories\Interfaces\PromotionRepositoryInterface as PromotionRepository;
 use App\Repositories\Interfaces\OrderRepositoryInterface as OrderRepository;
 use App\Repositories\Interfaces\ProductVariantRepositoryInterface  as ProductVariantRepository;
-use Cart;
+use Gloudemans\Shoppingcart\Facades\Cart;
 use App\Mail\OrderMail;
 
 /**
@@ -45,32 +45,48 @@ class CartService  implements CartServiceInterface
     public function create($request, $language = 1){
         try{
             $payload = $request->input();
-            $product = $this->productRepository->findById($payload['id'], ['*'], [
+            \Log::info('CartService create payload:', $payload);
+            // Kiểm tra tồn tại và giá trị của các key
+            $id = isset($payload['id']) ? $payload['id'] : null;
+            $quantity = isset($payload['quantity']) ? $payload['quantity'] : 1;
+            $attribute_id = isset($payload['attribute_id']) && is_array($payload['attribute_id']) ? $payload['attribute_id'] : [];
+            if ($id === null) {
+                throw new \Exception('Product ID is required');
+            }
+            $product = $this->productRepository->findById($id, ['*'], [
                 'languages' => function($query) use ($language) {
                     $query->where('language_id',  $language);
                 }
             ]);
+            $productName = '';
+            if ($product && $product->languages && $product->languages->first() && isset($product->languages->first()->pivot->name)) {
+                $productName = $product->languages->first()->pivot->name;
+            }
             $data = [
                 'id' => $product->id,
-                'name' => $product->languages->first()->pivot->name,
-                'qty' => $payload['quantity'],
+                'name' => $productName,
+                'qty' => $quantity,
             ];
-            if(isset($payload['attribute_id']) && count($payload['attribute_id'])){
-                $attributeId = sortAttributeId($payload['attribute_id']);
+            if(count($attribute_id)){
+                $attributeId = sortAttributeId($attribute_id);
                 $variant = $this->productVariantRepository->findVariant($attributeId, $product->id, $language);
-                $variantPromotion = $this->promotionRepository->findPromotionByVariantUuid($variant->uuid);
-                $variantPrice = getVariantPrice($variant, $variantPromotion);
+                $variantPromotion = isset($variant->uuid) ? $this->promotionRepository->findPromotionByVariantUuid($variant->uuid) : null;
+                $variantPrice = is_object($variant) ? getVariantPrice($variant, $variantPromotion) : ['priceSale' => 0, 'price' => 0];
 
-                $data['id'] =  $product->id.'_'.$variant->uuid;
-                $data['name'] = $product->languages->first()->pivot->name.' '.$variant->languages()->first()->pivot->name;
-                $data['price'] = ($variantPrice['priceSale'] > 0) ? $variantPrice['priceSale'] : $variantPrice['price'];
+                $variantName = '';
+                if (is_object($variant) && $variant->languages()->first() && isset($variant->languages()->first()->pivot->name)) {
+                    $variantName = $variant->languages()->first()->pivot->name;
+                }
+                $data['id'] =  $product->id.(isset($variant->uuid) ? '_'.$variant->uuid : '');
+                $data['name'] = $productName.' '.$variantName;
+                $data['price'] = (isset($variantPrice['priceSale']) && $variantPrice['priceSale'] > 0) ? $variantPrice['priceSale'] : ($variantPrice['price'] ?? 0);
                 $data['options'] = [
-                    'attribute' => $payload['attribute_id'],
+                    'attribute' => $attribute_id,
                 ];
             }else{
                 $product = $this->productService->combineProductAndPromotion([$product->id], $product, true); 
                 $price = getPrice($product);
-                $data['price'] = ($price['priceSale'] > 0) ? $price['priceSale'] : $price['price'];
+                $data['price'] = (isset($price['priceSale']) && $price['priceSale'] > 0) ? $price['priceSale'] : ($price['price'] ?? 0);
             }
 
             Cart::instance('shopping')->add($data);
@@ -78,7 +94,6 @@ class CartService  implements CartServiceInterface
             return true;
         }catch(\Exception $e ){
             echo $e->getMessage().$e->getCode();die();
-            return false;
         }
     }
 
@@ -93,7 +108,6 @@ class CartService  implements CartServiceInterface
             return $cartCaculate;
         }catch(\Exception $e ){
             echo $e->getMessage().$e->getCode();die();
-            return false;
         }
     }
 
@@ -105,7 +119,6 @@ class CartService  implements CartServiceInterface
             return $cartCaculate;
         }catch(\Exception $e ){
             echo $e->getMessage().$e->getCode();die();
-            return false;
         }
     }
 
@@ -114,7 +127,14 @@ class CartService  implements CartServiceInterface
         DB::beginTransaction();
         try{
             $payload = $this->request($request);
-            $order = $this->orderRepository->create($payload, ['products']);
+            // Kiểm tra dữ liệu đầu vào trước khi tạo order
+            $requiredFields = ['fullname', 'email', 'phone', 'address'];
+            foreach ($requiredFields as $field) {
+                if (!isset($payload[$field]) || empty($payload[$field])) {
+                    throw new \Exception('Thiếu thông tin: ' . $field);
+                }
+            }
+            $order = $this->orderRepository->create($payload);
             if($order->id > 0){
                 $this->createOrderProduct($payload, $order, $request);
                 $this->mail($order, $system);
@@ -129,10 +149,6 @@ class CartService  implements CartServiceInterface
             DB::rollBack();
             // Log::error($e->getMessage());
             echo $e->getMessage();die();
-            return [
-                'order' => null,
-                'flag' => false,
-            ];
         }
     }
 
@@ -186,38 +202,49 @@ class CartService  implements CartServiceInterface
         $payload = $request->except(['_token', 'voucher', 'create']);
         $payload['code'] = time();
         $payload['cart'] = $cartCaculate;
-        $payload['promotion']['discount'] = $cartPromotion['discount'] ?? '';
-        $payload['promotion']['name'] = $cartPromotion['selectedPromotion']->name ?? '';
-        $payload['promotion']['code'] = $cartPromotion['selectedPromotion']->code ?? '';
-        $payload['promotion']['startDate'] = $cartPromotion['selectedPromotion']->startDate ?? '';
-        $payload['promotion']['endDate'] = $cartPromotion['selectedPromotion']->endDate ?? '';
+        $selectedPromotion = (isset($cartPromotion['selectedPromotion']) && is_object($cartPromotion['selectedPromotion'])) ? $cartPromotion['selectedPromotion'] : null;
+        $payload['promotion'] = [
+            'discount' => $cartPromotion['discount'] ?? '',
+            'name' => $selectedPromotion ? $selectedPromotion->name : '',
+            'code' => $selectedPromotion ? $selectedPromotion->code : '',
+            'startDate' => $selectedPromotion ? $selectedPromotion->startDate : '',
+            'endDate' => $selectedPromotion ? $selectedPromotion->endDate : '',
+        ];
         $payload['confirm'] = 'confirm'; // Tự động xác nhận đơn hàng khi đặt
         $payload['delivery'] = 'pending';
         $payload['payment'] = 'unpaid';
-        
+
         // Xử lý customer_id nếu người dùng đã đăng nhập
         $customer = \Auth::guard('customer')->user();
-        if($customer && $customer->id) {
+        if($customer && isset($customer->id)) {
             $payload['customer_id'] = $customer->id;
             $payload['guest_cookie'] = null;
-            
+
             // Debug log để kiểm tra
             \Log::info('Order created with customer_id', [
                 'customer_id' => $customer->id,
-                'customer_email' => $customer->email,
+                'customer_email' => isset($customer->email) ? $customer->email : '',
                 'order_code' => $payload['code']
             ]);
         } else {
             $payload['customer_id'] = null;
             $payload['guest_cookie'] = $request->session()->getId();
-            
+
             // Debug log
             \Log::info('Order created as guest', [
                 'guest_cookie' => $request->session()->getId(),
                 'order_code' => $payload['code']
             ]);
         }
-        
+
+        // Đảm bảo các trường bắt buộc không bị null
+        $requiredFields = ['fullname', 'email', 'phone', 'address'];
+        foreach ($requiredFields as $field) {
+            if (!isset($payload[$field])) {
+                $payload[$field] = '';
+            }
+        }
+
         return $payload;
     }
 

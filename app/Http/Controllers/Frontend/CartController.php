@@ -105,6 +105,15 @@ class CartController extends FrontendController
 
     public function store(StoreCartRequest $request){
         $system = $this->system;
+        // Kiểm tra dữ liệu đầu vào
+        $payload = $request->except(['_token', 'voucher', 'create']);
+        $requiredFields = ['fullname', 'email', 'phone', 'address'];
+        foreach ($requiredFields as $field) {
+            if (!isset($payload[$field]) || empty($payload[$field])) {
+                return redirect()->route('cart.checkout')->with('error', 'Thiếu thông tin: ' . $field);
+            }
+        }
+        // Truyền lại request đã kiểm tra sang CartService
         $order = $this->cartService->order($request, $system);
         if($order['flag']){
             if($order['order']->method !== 'cod'){

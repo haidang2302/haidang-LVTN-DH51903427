@@ -107,12 +107,8 @@ class BaseRepository implements BaseRepositoryInterface
         return $query->get();
     }
 
-    public function findById(
-        int $modelId,
-        array $column = ['*'],
-        array $relation = [],
-    ){
-        return $this->model->select($column)->with($relation)->findOrFail($modelId);
+    public function findById($id, $columns = ['*'], $relations = []) {
+        return $this->model->select($columns)->with($relations)->findOrFail($id);
     }
 
     public function findByCondition(

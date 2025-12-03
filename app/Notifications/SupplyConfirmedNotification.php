@@ -19,10 +19,17 @@ class SupplyConfirmedNotification extends Notification implements ShouldQueue
     }
 
     public function via($notifiable)
-    {
-        return ['mail'];
-    }
+{
+    return ['mail', 'database'];
+}
 
+public function toDatabase($notifiable)
+{
+    return [
+        'message' => 'Yêu cầu nhập hàng cho sản phẩm #' . $this->supplyRequest->product_id . ' đã được xác nhận.',
+        'supply_request_id' => $this->supplyRequest->id,
+    ];
+}
     public function toMail($notifiable)
     {
         return (new MailMessage)

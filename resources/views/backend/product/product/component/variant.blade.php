@@ -109,4 +109,18 @@
     var attribute = '{{ base64_encode(json_encode(old('attribute') ?? (isset($product->attribute) ? $product->attribute : []))) }}';
     var variant = '{{ base64_encode(json_encode(old('variant') ?? (isset($product->variant) ? json_decode($product->variant, TRUE) : []))) }}';
 
+ // Thêm đoạn 
+   var checkbox = document.getElementById('variantCheckbox');
+var wrapper = document.querySelector('.variant-wrapper');
+
+if (checkbox && wrapper) {
+    // Khi người dùng click
+    checkbox.addEventListener('change', function() {
+        wrapper.classList.toggle('hidden', !checkbox.checked);
+    });
+
+    // Khi tải trang (ví dụ edit sản phẩm)
+    wrapper.classList.toggle('hidden', !checkbox.checked);
+}
+
 </script>

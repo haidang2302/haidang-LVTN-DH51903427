@@ -8,5 +8,6 @@ namespace App\Repositories\Interfaces;
  */
 interface ProductRepositoryInterface
 {
-    
+    public function findById($id, $columns = ['*'], $relations = []);
+    public function findByCondition($condition = [], $flag = false, $relation = [], array $orderBy = ['id', 'desc'], array $param = [], array $withCount = []);
 }

@@ -93,4 +93,10 @@ class Product extends Model
             'status',
         );;
     }
+// Liên kết với nhà cung cấp
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
 }

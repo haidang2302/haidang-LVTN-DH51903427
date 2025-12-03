@@ -11,6 +11,6 @@ class SupplierNotificationController extends Controller
         $user = auth()->user();
         $notifications = $user ? $user->notifications : collect();
         $template = 'backend.supplier.notifications';
-        return view('backend.dashboard.layout', compact('template', 'notifications'));
-    }
+        return view('backend.supplier.notifications', compact('notifications'));
+}
 }

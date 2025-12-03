@@ -35,11 +35,14 @@ class AttributeService extends BaseService implements AttributeServiceInterface
         $perPage = $request->integer('perpage');
         $condition = [
             'keyword' => addslashes($request->input('keyword')),
-            'publish' => $request->integer('publish'),
             'where' => [
                 ['tb2.language_id', '=', $languageId],
             ],
         ];
+        // Chỉ lọc publish nếu request có giá trị publish
+        if($request->has('publish') && $request->input('publish') !== '') {
+            $condition['publish'] = $request->integer('publish');
+        }
         $paginationConfig = [
             'path' => 'attribute.index', 
             'groupBy' => $this->paginateSelect()
@@ -155,10 +158,20 @@ class AttributeService extends BaseService implements AttributeServiceInterface
 
 
     private function catalogue($request){
+        $catalogues = [];
         if($request->input('catalogue') != null){
-            return array_unique(array_merge($request->input('catalogue'), [$request->attribute_catalogue_id]));
+            // Lọc bỏ các giá trị 0 hoặc rỗng
+            $catalogues = array_filter($request->input('catalogue'), function($id){
+                return !empty($id) && $id > 0;
+            });
+            // Nếu có attribute_catalogue_id riêng, cũng kiểm tra
+            if($request->attribute_catalogue_id && $request->attribute_catalogue_id > 0){
+                $catalogues[] = $request->attribute_catalogue_id;
+            }
+            return array_unique($catalogues);
         }
-        return [$request->attribute_catalogue_id];
+        // Trường hợp chỉ có attribute_catalogue_id
+        return ($request->attribute_catalogue_id && $request->attribute_catalogue_id > 0) ? [$request->attribute_catalogue_id] : [];
     }
     
     
